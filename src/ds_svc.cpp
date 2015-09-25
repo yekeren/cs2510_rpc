@@ -1,36 +1,30 @@
-#include "cs_svc.h"
+#include "ds_svc.h"
 
-cs_svc::cs_svc() {
+ds_svc *ds_svc::m_pthis = NULL;
+
+ds_svc::ds_svc() {
 }
 
-cs_svc::~cs_svc() {
+ds_svc::~ds_svc() {
 }
 
-cs_svc *cs_svc::instance() {
-    return NULL;
+ds_svc *ds_svc::instance() {
+    if (NULL == m_pthis) {
+        m_pthis = new ds_svc;
+    }
+    return m_pthis;;
 }
 
-void cs_svc::destroy() {
+void ds_svc::destroy() {
+    if (NULL != m_pthis) {
+        delete m_pthis;
+    }
+    m_pthis = NULL;
 }
 
-int cs_svc::get_response(const std::string &ip, 
-        uint16_t port,
-        void *req_buf, int req_buf_len,
-        void *rsp_buf, int &rsp_buf_len) {
+int ds_svc::get_instances_by_name(const std::string &name,
+        std::vector<svr_inst_t> &svr_instants_list) {
 
-    int fd = socket(PF_INET, SOCK_STREAM, 0);
-    connet();
-    send()/write()
-    /* http */
-    ""
-    receive()/read()
-    close()
 
-    //socket;
-    struct head {
-        int body_len;
-    };
-    send()
-    body_len = receive(4);
-    reaceive(body_len);
+    return 0;
 }

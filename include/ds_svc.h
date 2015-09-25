@@ -1,28 +1,33 @@
-#ifndef CS_SVC_H
-#define CS_SVC_H
+#ifndef __CS_SVC_H__
+#define __CS_SVC_H__
 
-#include <stdInt.h>
 #include <string>
+#include <vector>
 
-struct svr_t {
+struct svr_inst_t {
+    int id;
+    std::string name;
+    std::string version;
     std::string ip;
-    uint16_t port;
+    unsigned short port;
 };
 
-class cs_svc {
+class ds_svc {
     protected:
-        cs_svc();
-        virtual ~cs_svc();
+        ds_svc();
+        virtual ~ds_svc();
 
     public:
-        static cs_svc *instance();
+        static ds_svc *instance();
+
         static void destroy();
 
     public:
-        int get_response(const std::string &ip, 
-                uint16_t port,
-                void *req_buf, int req_buf_len,
-                void *rsp_buf, int &rsp_buf_len);
+        int get_instances_by_name(const std::string &name,
+                std::vector<svr_inst_t> &svr_instants_list);
+
+    private:
+        static ds_svc *m_pthis;
 };
 
 #endif
