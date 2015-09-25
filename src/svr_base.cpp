@@ -1,4 +1,5 @@
 #include "svr_base.h"
+#include <string.h>
 #include "rpc_log.h"
 #include "rpc_net.h"
 

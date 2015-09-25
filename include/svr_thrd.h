@@ -1,7 +1,6 @@
 #ifndef __SVR_THRD__
 #define __SVR_THRD__
 
-#include <stdInt.h>
 #include <string>
 
 class svr_thrd_base {
@@ -24,12 +23,12 @@ class svr_thrd_base {
         virtual void run_routine();
 
         virtual void proc_new_conn(int fd, 
-                const std::string &ip, uint16_t port);
+                const std::string &ip, unsigned short port);
 
     private:
         int m_fd;
         std::string m_ip;
-        uint16_t m_port;
+        unsigned short m_port;
 };
 
 class svr_thrd_mgr_base {
@@ -39,7 +38,7 @@ class svr_thrd_mgr_base {
 
     public:
         virtual void proc_new_conn(int fd, 
-                const std::string &ip, uint16_t port);
+                const std::string &ip, unsigned short port);
 };
 
 #endif

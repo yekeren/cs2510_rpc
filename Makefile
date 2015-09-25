@@ -10,7 +10,7 @@ all: $(SVR_BIN)
 	@echo "compiling $(SVR_BIN)..."
 
 $(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
-	$(CXX) $(CXXFLAGS) -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main.cpp

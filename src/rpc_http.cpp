@@ -79,7 +79,7 @@ int http_recv(int fd, int timeout_ms,
     RPC_DEBUG("\nread head done, %s", head.c_str());
 
     int content_len = 0;
-    char *pos = strcasestr(head.c_str(), "content-length");
+    char *pos = strcasestr((char*)head.c_str(), "content-length");
     if (pos) {
         char *pos_colon = strcasestr(pos, ":");
         if (pos_colon) {
