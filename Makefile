@@ -1,14 +1,25 @@
 CXX='g++'
 CXXFLAGS='-g'
 
-CLI_LIB='rpc.a'
+CLI_LIB='rpc_cli'
 SVR_BIN='rpc'
 
 INCLUDE='./include'
 
-all: $(SVR_BIN)
+all: $(SVR_BIN) $(CLI_LIB)
 	@echo "compiling $(SVR_BIN)..."
 
+# making the cli_lib
+$(CLI_LIB): main_cli.o add_stub_cli.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) main_cli.o add_stub_cli.o
+
+main_cli.o: main_cli.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
+
+add_stub_cli.o: src/add_stub_cli.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_stub_cli.cpp
+
+# making the svr_bin
 $(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
 
