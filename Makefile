@@ -1,26 +1,33 @@
 CXX='g++'
 CXXFLAGS='-g'
 
-PROJ_NAME='rpc'
+CLI_LIB='rpc.a'
+SVR_BIN='rpc'
 
-all: ${PROJ_NAME}
+INCLUDE='./include'
 
-${PROJ_NAME}: main.o add_stub.o ds_svc.o
-	@echo "compiling ${PROJ_NAME}..."
-	${CXX} -o ${PROJ_NAME} main.o add_stub.o ds_svc.o
+all: $(SVR_BIN)
+	@echo "compiling $(SVR_BIN)..."
+
+$(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
+	$(CXX) $(CXXFLAGS) -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
 
 main.o: main.cpp
-	@echo "compiling main.o"
-	${CXX} -c main.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main.cpp
 
-add_stub.o: add_stub.cpp
-	@echo "compiling add_stub.o"
-	${CXX} -c add_stub.cpp
+svr_base.o: src/svr_base.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/svr_base.cpp
 
-ds_svc.o: ds_svc.cpp
-	@echo "compiling ds_svc.o"
-	${CXX} -c ds_svc.cpp
+svr_thrd.o: src/svr_thrd.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/svr_thrd.cpp
 
+rpc_net.o: src/rpc_net.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/rpc_net.cpp
+
+rpc_http.o: src/rpc_http.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/rpc_http.cpp
+
+.PHONY: clean
 clean:
 	rm -f *.o
-	rm -f ${PROJ_NAME}
+	rm $(SVR_BIN)
