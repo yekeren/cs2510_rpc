@@ -24,9 +24,9 @@ void svr_thrd_base::run_routine() {
     RPC_DEBUG("serving..., fd=%d, ip=%s, port=%u", m_fd, m_ip.c_str(), m_port);
 
     std::string head, body;
-    int ret = http_recv(m_fd, 100 * 1000, head, body);
+    int ret = http_recv(m_fd, head, body, 100 * 1000);
 
-    ret = http_send(m_fd, 100 * 1000, "202\r\n\r\n", "hello, world");
+    ret = http_send(m_fd, "202\r\n\r\n", "hello, world", 100 * 1000);
 
     close(m_fd);
     delete this; /* ugly impl */

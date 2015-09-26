@@ -119,5 +119,8 @@ int ds_svc::get_instances_by_name(const std::string &name,
         return -1;
     }
 
+    RPC_DEBUG("head=%s", rsp_head.c_str());
+    RPC_DEBUG("body=%s", rsp_body.c_str());
+    RPC_DEBUG("body_len=%lu", rsp_body.size());
     return 0;
 }

@@ -5,6 +5,32 @@
 #include <vector>
 
 /**
+ * @brief send to fd
+ *
+ * @param fd
+ * @param head
+ * @param body
+ * @param send_timeout_ms
+ *
+ * @return 
+ */
+int http_send(int fd, const std::string &head, 
+        const std::string &body, int send_timeout_ms);
+
+/**
+ * @brief recv from fd
+ *
+ * @param fd
+ * @param head
+ * @param body
+ * @param send_timeout_ms
+ *
+ * @return 
+ */
+int http_recv(int fd, std::string &head, 
+        std::string &body, int recv_timeout_ms);
+
+/**
  * @brief http talk
  *
  * @param ips_list available ips of the service
@@ -23,11 +49,5 @@ int http_talk(const std::vector<std::string> &ips_list, unsigned short port,
         const std::string &req_head, const std::string &req_body,
         std::string &rsp_head, std::string &rsp_body,
         int conn_timeout_ms, int send_timeout_ms, int recv_timeout_ms);
-
-int http_send(int fd, int timeout_ms,
-        const std::string &head, const std::string &body);
-
-int http_recv(int fd, int timeout_ms,
-        std::string &head, std::string &body);
 
 #endif
