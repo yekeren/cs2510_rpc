@@ -22,6 +22,10 @@ class ds_svc {
 
         static void destroy();
 
+    private:
+        int get_ips_by_host(const std::string &host_name,
+                std::vector<std::string> &ips_list);
+
     public:
         int get_instances_by_name(const std::string &name,
                 std::vector<svr_inst_t> &svr_instants_list);
