@@ -6,10 +6,56 @@
 #include "rpc_net.h"
 #include "rpc_log.h"
 
-static unsigned long long get_cur_ms() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+/**
+ * @brief http talk
+ *
+ * @param ips_list available ips of the service
+ * @param port service port
+ * @param req_head
+ * @param req_body
+ * @param rsp_head
+ * @param rsp_body
+ * @param conn_timeout_ms
+ * @param send_timeout_ms
+ * @param recv_timeout_ms
+ *
+ * @return 
+ */
+int http_talk(const std::vector<std::string> &ips_list, unsigned short port,
+        const std::string &req_head, const std::string &req_body,
+        std::string &rsp_head, std::string &rsp_body,
+        int conn_timeout_ms, int send_timeout_ms, int recv_timeout_ms) {
+
+    /* connect to remote server */
+    int fd = -1;
+    for (int i = 0; i < (int)ips_list.size(); ++i) {
+        fd = connect_ex((char*)ips_list[i].c_str(), port, conn_timeout_ms);
+        if (-1 == fd) {
+            RPC_WARNING("connect_ex() failed, fd=%d, ip=%s, port=%u", 
+                    fd, ips_list[i].c_str(), port);
+        } else {
+            break;
+        }
+    }
+
+    /* send data to the remote server */
+    int send_len = send_ex(fd, (char*)req_head.c_str(), 
+            req_head.length(), 0, send_timeout_ms);
+    if (send_len < 0) {
+        RPC_WARNING("send_ex() error, fd=%d", fd);
+        return -1;
+    }
+
+    /* recv response from remote server */
+    char buf[60] = { 0 };
+    int recv_len = recv_ex(fd, buf, sizeof(buf), 
+            0, recv_timeout_ms);
+    if (recv_len < 0) {
+        RPC_WARNING("recv_ex() error, fd=%d", fd);
+        return -1;
+    }
+    RPC_DEBUG("%s", buf);
+    return 0;
 }
 
 int http_send(int fd, int timeout_ms,

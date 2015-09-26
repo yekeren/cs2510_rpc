@@ -1,16 +1,28 @@
 #include "ds_svc.h"
 #include "rpc_net.h"
+#include "rpc_http.h"
 #include "rpc_log.h"
 #include "common_def.h"
 
 ds_svc *ds_svc::m_pthis = NULL;
 
+/**
+ * @brief construct 
+ */
 ds_svc::ds_svc() {
 }
 
+/**
+ * @brief destruct
+ */
 ds_svc::~ds_svc() {
 }
 
+/**
+ * @brief create singleton
+ *
+ * @return 
+ */
 ds_svc *ds_svc::instance() {
     if (NULL == m_pthis) {
         m_pthis = new ds_svc;
@@ -18,6 +30,9 @@ ds_svc *ds_svc::instance() {
     return m_pthis;;
 }
 
+/**
+ * @brief destroy singleton
+ */
 void ds_svc::destroy() {
     if (NULL != m_pthis) {
         delete m_pthis;
@@ -25,6 +40,14 @@ void ds_svc::destroy() {
     m_pthis = NULL;
 }
 
+/**
+ * @brief get ips from host name
+ *
+ * @param host_name
+ * @param ips_list
+ *
+ * @return 
+ */
 int ds_svc::get_ips_by_host(const std::string &host_name,
         std::vector<std::string> &ips_list) {
 
@@ -59,6 +82,14 @@ int ds_svc::get_ips_by_host(const std::string &host_name,
     return 0;
 }
 
+/**
+ * @brief get svr instances by service name
+ *
+ * @param name
+ * @param svr_instants_list
+ *
+ * @return 
+ */
 int ds_svc::get_instances_by_name(const std::string &name,
         std::vector<svr_inst_t> &svr_instants_list) {
 
@@ -69,46 +100,24 @@ int ds_svc::get_instances_by_name(const std::string &name,
         return -1;
     }
 
-    /* connect to remote server */
-    int fd = -1;
-    for (int i = 0; i < (int)ips_list.size(); ++i) {
-        fd = connect_ex((char*)ips_list[i].c_str(), 
-                DIR_SVR_PORT, DIR_SVR_CONN_TIMEOUT);
-        if (-1 == fd) {
-            RPC_WARNING("connect_ex() failed, try=%d, fd=%d, ip=%s, port=%u", 
-                    i, fd, ips_list[i].c_str(), DIR_SVR_PORT);
-        } else {
-            break;
-        }
-    }
-    if (fd < 0) {
-        RPC_WARNING("get_instances_by_name() failed, name=%s", name.c_str());
-        return -1;
-    }
-
     /* send request to remote server */
-    std::string request_head;
-    request_head += "GET /server-config.xml HTTP/1.1\r\n";
-    request_head += "Host: "DIR_SVR_HOST"\r\n";
-    request_head += "\r\n\r\n";
+    std::string req_head, req_body;
+    std::string rsp_head, rsp_body;
 
-    int send_len = send_ex(fd, (char*)request_head.c_str(), 
-            request_head.length(), 0, DIR_SVR_SEND_TIMEOUT);
-    if (send_len < 0) {
-        RPC_WARNING("send_ex() error, fd=%d", fd);
+    req_head += "GET /server-config.xml HTTP/1.1\r\n";
+    req_head += "Host: "DIR_SVR_HOST"\r\n";
+    req_head += "\r\n\r\n";
+
+    int ret = http_talk(ips_list, DIR_SVR_PORT, 
+            req_head, req_body, 
+            rsp_head, rsp_body,
+            DIR_SVR_CONN_TIMEOUT, 
+            DIR_SVR_SEND_TIMEOUT, 
+            DIR_SVR_RECV_TIMEOUT);
+    if (0 > ret) {
+        RPC_WARNING("http_talk() failed");
         return -1;
     }
-
-    /* recv response from remote server */
-    char buf[60] = { 0 };
-    int recv_len = recv_ex(fd, buf, sizeof(buf), 
-            0, DIR_SVR_RECV_TIMEOUT);
-    if (recv_len < 0) {
-        RPC_WARNING("recv_ex() error, fd=%d", fd);
-        return -1;
-    }
-    RPC_DEBUG("%s", buf);
-
 
     return 0;
 }
