@@ -5,7 +5,7 @@
 #include <vector>
 
 struct svr_inst_t {
-    int id;
+    std::string id;
     std::string name;
     std::string version;
     std::string ip;
@@ -51,15 +51,15 @@ class ds_svc {
 
     public:
         /**
-         * @brief get svr instances by service name
+         * @brief get svr insts by service name
          *
          * @param name
-         * @param svr_instants_list
+         * @param svr_insts_list
          *
          * @return 
          */
-        int get_instances_by_name(const std::string &name,
-                std::vector<svr_inst_t> &svr_instants_list);
+        int get_insts_by_name(const std::string &name,
+                std::vector<svr_inst_t> &svr_insts_list);
 
     private:
         static ds_svc *m_pthis;

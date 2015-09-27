@@ -1,27 +1,50 @@
+#ifndef __ADD_PROTO__
+#define __ADD_PROTO__
 
-class add_marshal {
+class add_proto {
     public:
-        set_a(int a) {
-            *(int*)&buffer[pt] = a;
-            pt += sizeof(int);
-            xmlObj.addint();
-        }
-        set_b(int b);
-
-        const char *get_send_buffer() {
-            return buffer;
+        add_proto() {
         }
 
-        int get_send_buffer_len() {
-            return pt;
+        virtual ~add_proto() {
         }
 
-        int decode(void *buf, int buf_len) {
-            this->a = *(int*)buf;
+    public:
+        void set_a(int a) {
+            *(int*)(m_buf + 0) = a;
+        }
+
+        void set_b(int b) {
+            *(int*)(m_buf + 4) = b;
+        }
+
+        void set0_ret(int ret) {
+            *(int*)(m_buf + 8) = ret;
+        }
+
+        int get_a() {
+            return *(int*)(m_buf + 0);
+        }
+
+        int get_b() {
+            return *(int*)(m_buf + 4);
+        }
+
+        int get0_ret() {
+            return *(int*)(m_buf + 8);
+        }
+
+    public:
+        void attach_buf(char *buf, int buf_len) {
+            memcpy(m_buf, buf, buf_len);
+        }
+
+        void detach_buf(char *buf, int buf_len) {
+            memcpy(buf, m_buf, buf_len);
         }
 
     private:
-        int a, b;
-        int pt;
-        char buffer[1024];
+        char m_buf[12];
 };
+
+#endif
