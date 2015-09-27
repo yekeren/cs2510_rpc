@@ -1,44 +1,112 @@
 #ifndef __SVR_THRD__
 #define __SVR_THRD__
 
-#include <string>
+#include <pthread.h>
+#include <vector>
+#include <list>
 
-class svr_thrd_base {
+class http_event;
+
+class svr_thrd {
     public:
-        svr_thrd_base();
-        virtual ~svr_thrd_base();
+        /**
+         * @brief construct
+         */
+        svr_thrd();
+
+        /**
+         * @brief distruct
+         */
+        virtual ~svr_thrd();
 
     public:
+        /**
+         * @brief create computing thread
+         *
+         * @return 
+         */
         int run();
 
-        virtual void stop() { }
+        /**
+         * @brief return the status the this thread
+         *
+         * @return 
+         */
+        virtual bool is_running() { return m_running; }
 
-        virtual void join() { }
+        /**
+         * @brief stop computing thread
+         */
+        virtual void stop() { m_running = false; }
 
-        virtual bool is_running() { return false; }
+        /**
+         * @brief join this thread
+         */
+        virtual void join();
 
     public:
-        static void *run_routine(void *args);
-
-        virtual void run_routine();
-
-        virtual void proc_new_conn(int fd, 
-                const std::string &ip, unsigned short port);
+        /**
+         * @brief add a computing task
+         *
+         * @param evt
+         */
+        virtual void add_task(http_event *evt);
 
     private:
-        int m_fd;
-        std::string m_ip;
-        unsigned short m_port;
+        /**
+         * @brief 
+         *
+         * @param args
+         *
+         * @return 
+         */
+        static void *run_routine(void *args);
+
+        /**
+         * @brief 
+         */
+        virtual void run_routine();
+
+    private:
+        bool m_running;
+        pthread_t m_thrd_id;
+
+        pthread_cond_t m_cond;
+        pthread_mutex_t m_mutex;
+        std::list<http_event*> m_tasks;
 };
 
-class svr_thrd_mgr_base {
+class svr_thrd_dsptch {
     public:
-        svr_thrd_mgr_base();
-        virtual ~svr_thrd_mgr_base();
+        /**
+         * @brief construct 
+         */
+        svr_thrd_dsptch();
+
+        /**
+         * @brief distruct
+         */
+        virtual ~svr_thrd_dsptch();
 
     public:
-        virtual void proc_new_conn(int fd, 
-                const std::string &ip, unsigned short port);
+        /**
+         * @brief dispatch computing task
+         *
+         * @param evt
+         */
+        virtual void dispatch_task(http_event *evt);
+
+        /**
+         * @brief set computing threads
+         *
+         * @param thrds
+         */
+        void set_thrds(std::vector<svr_thrd*> &thrds) { 
+            m_thrds = thrds;
+        }
+
+    private:
+        std::vector<svr_thrd*> m_thrds;
 };
 
 #endif

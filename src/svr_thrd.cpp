@@ -1,40 +1,95 @@
 #include "svr_thrd.h"
-#include <pthread.h>
+#include <assert.h>
+#include <stdlib.h>
 #include "rpc_log.h"
 #include "rpc_net.h"
 #include "rpc_http.h"
+#include "io_event.h"
 
 /**************************************
-* svr_thrd_base
-**************************************/
+ * svr_thrd
+ **************************************/
 
-svr_thrd_base::svr_thrd_base(): m_fd(0), m_port(0) {
+/**
+ * @brief construct
+ */
+svr_thrd::svr_thrd(): m_running(true){
 }
 
-svr_thrd_base::~svr_thrd_base() {
+/**
+ * @brief distruct
+ */
+svr_thrd::~svr_thrd() {
 }
 
-void *svr_thrd_base::run_routine(void *args) {
-    svr_thrd_base *pthis = (svr_thrd_base*)args;
+/**
+ * @brief 
+ *
+ * @param args
+ *
+ * @return 
+ */
+void *svr_thrd::run_routine(void *args) {
+    svr_thrd *pthis = (svr_thrd*)args;
     pthis->run_routine();
     return NULL;
 }
 
-void svr_thrd_base::run_routine() {
-    RPC_DEBUG("serving..., fd=%d, ip=%s, port=%u", m_fd, m_ip.c_str(), m_port);
+/**
+ * @brief 
+ */
+void svr_thrd::run_routine() {
+    RPC_INFO("thread started");
+    while (this->is_running()) {
+        struct timespec to;
+        to.tv_sec = time(NULL) + 1;
+        to.tv_nsec = 0;
 
-    std::string head, body;
-    int ret = http_recv(m_fd, head, body, 100 * 1000);
+        /* pop a task */
+        pthread_mutex_lock(&m_mutex);
+        pthread_cond_timedwait(&m_cond, &m_mutex, &to);
+        http_event *evt = NULL;
+        if (m_tasks.size() > 0) {
+            evt = m_tasks.front();
+            m_tasks.pop_front();
+        }
+        pthread_mutex_unlock(&m_mutex);
 
-    ret = http_send(m_fd, "202\r\n\r\n", "hello, world", 100 * 1000);
-
-    close(m_fd);
-    delete this; /* ugly impl */
+        if (evt) {
+            evt->on_compute();
+        }
+    }
+    RPC_INFO("thread stoped");
 }
 
-int svr_thrd_base::run() {
-    pthread_t thrd_id;
-    int ret = pthread_create(&thrd_id, NULL, run_routine, this);
+/**
+ * @brief join this thread
+ */
+void svr_thrd::join() {
+    pthread_join(m_thrd_id, NULL);
+    pthread_cond_destroy(&m_cond);
+    pthread_mutex_destroy(&m_mutex);
+}
+
+/**
+ * @brief create computing thread
+ *
+ * @return 
+ */
+int svr_thrd::run() {
+    /* init cond */
+    if (0 != pthread_cond_init(&m_cond, NULL)) {
+        RPC_WARNING("pthread_cond() error");
+        return -1;
+    }
+    /* init mutex */
+    if (0 != pthread_mutex_init(&m_mutex, NULL)) {
+        RPC_WARNING("pthread_mutex_init() error");
+        return -1;
+    }
+
+    /* create thread */
+    int ret = pthread_create(&m_thrd_id, NULL, run_routine, this);
     if (0 != ret) {
         RPC_WARNING("pthread_create() error, errno=%d", errno);
         return -1;
@@ -43,26 +98,42 @@ int svr_thrd_base::run() {
     return 0;
 }
 
-void svr_thrd_base::proc_new_conn(int fd, 
-        const std::string &ip, uint16_t port) {
-    m_fd = fd;
-    m_ip = ip;
-    m_port = port;
+/**
+ * @brief create a computing task
+ *
+ * @param evt
+ */
+void svr_thrd::add_task(http_event *evt) {
+    pthread_mutex_lock(&m_mutex);
+    m_tasks.push_back(evt);
+    pthread_mutex_unlock(&m_mutex);
+    pthread_cond_signal(&m_cond);
 }
 
 /**************************************
-* svr_thrd_mgr_base
-**************************************/
-svr_thrd_mgr_base::svr_thrd_mgr_base() {
+ * svr_thrd_dsptch
+ **************************************/
+
+/**
+ * @brief construct 
+ */
+svr_thrd_dsptch::svr_thrd_dsptch() {
 }
 
-svr_thrd_mgr_base::~svr_thrd_mgr_base() {
+/**
+ * @brief distruct
+ */
+svr_thrd_dsptch::~svr_thrd_dsptch() {
 }
 
-void svr_thrd_mgr_base::proc_new_conn(
-        int fd, const std::string &ip, uint16_t port) {
+/**
+ * @brief dispatch computing task
+ *
+ * @param evt
+ */
+void svr_thrd_dsptch::dispatch_task(http_event *evt) {
+    int i = rand() % m_thrds.size();
 
-    svr_thrd_base *thrd = new svr_thrd_base;
-    thrd->proc_new_conn(fd, ip, port);
-    thrd->run();
+    RPC_DEBUG("dispatch task to [%d]", i);
+    m_thrds[i]->add_task(evt);
 }

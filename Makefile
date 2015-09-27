@@ -11,7 +11,7 @@ cchighlight=\033[0;31m
 ccend=\033[0m
 
 #all: $(SVR_BIN) $(CLI_LIB)
-all: $(CLI_LIB)
+all: $(SVR_BIN)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
@@ -22,7 +22,7 @@ $(CLI_LIB): main_cli.o add_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o
 		ds_svc.o \
 		rpc_net.o \
 		rpc_http.o \
-		ezxml.o
+		ezxml.o 
 
 main_cli.o: main_cli.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
@@ -34,8 +34,8 @@ ds_svc.o: src/ds_svc.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svc.cpp
 
 # making the svr_bin
-$(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o
+$(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main.cpp
@@ -45,6 +45,9 @@ svr_base.o: src/svr_base.cpp
 
 svr_thrd.o: src/svr_thrd.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/svr_thrd.cpp
+
+io_event.o: src/io_event.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/io_event.cpp
 
 # common library for both server and client
 rpc_net.o: src/rpc_net.cpp

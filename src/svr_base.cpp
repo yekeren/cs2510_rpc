@@ -8,196 +8,92 @@
 /**************************************
  * svr_base
  **************************************/
-svr_base::svr_base() : m_fd(-1), m_thrd_mgr(NULL) {
+svr_base::svr_base() : m_thrd_dsptch(NULL), m_acc_evt(NULL) {
 }
 
 svr_base::~svr_base() {
-    if (m_fd >= 0) {
-        RPC_DEBUG("closing svr socket, fd=%d", m_fd);
-        close(m_fd);
+    if (NULL != m_acc_evt) {
+        delete m_acc_evt;
     }
-    m_fd = -1;
+    m_acc_evt = NULL;
 }
 
 int svr_base::bind(uint16_t port, int backlog) {
-    
-    /* create socket */
-    m_fd = socket(PF_INET, SOCK_STREAM, 0);
-    if (-1 == m_fd) {
-        RPC_WARNING("socket() error, errno=%d", errno);
+    m_acc_evt = new accept_event(this);
+    if (0 > m_acc_evt->bind(port, backlog)) {
+        RPC_WARNING("accept event bind() error, port=%u, backlog=%d", 
+                port, backlog);
         return -1;
     }
-    RPC_DEBUG("svr socket created, fd=%d", m_fd);
-    
-    /* set to nonblock socket */
-    if (-1 == set_nonblock(m_fd)) {
-        RPC_WARNING("set_nonblock() error, errno=%d", errno);
-        return -1;
-    }
-    
-    /* set reuseaddr */
-    int val = 1;
-    int ret = setsockopt(m_fd, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
-    if (-1 == ret) {
-        RPC_WARNING("setsockopt() error, errno=%d", errno);
-        return -1;
-    }
-    
-    /* bind to port */
-    struct sockaddr_in my_addr;
-    memset(&my_addr, 0, sizeof(my_addr));
-    my_addr.sin_family = AF_INET;
-    my_addr.sin_port = htons(port);
-    my_addr.sin_addr.s_addr = inet_addr("0.0.0.0");
-    
-    ret = ::bind(m_fd, (struct sockaddr*)&my_addr, sizeof(my_addr));
-    if (-1 == ret) {
-        RPC_WARNING("bind() error, errno=%d", errno);
-        return -1;
-    }
-    RPC_DEBUG("svr socket binded, port=%u", port);
-    
-    /* listen */
-    ret = listen(m_fd, backlog);
-    if (-1 == ret) {
-        RPC_WARNING("listen() error, errno=%d", errno);
-        return -1;
-    }
-    RPC_DEBUG("svr socket is listening, backlog=%d", backlog);
-    
-    RPC_INFO("svr binded succ, fd=%d, port=%u, backlog=%d", m_fd, port, backlog);
+    this->add_io_event(m_acc_evt);
     return 0;
 }
 
+void svr_base::add_io_event(io_event* evt) {
+    m_evts_appd.push_back(evt);
+}
+
 void svr_base::run_routine(int timeout_ms){
+    /* merge list */
+    std::list<io_event*>::iterator iter = m_evts_appd.begin();
+    for (; iter != m_evts_appd.end(); ++iter) {
+        m_evts.push_back(*iter);
+    }
+    m_evts_appd.clear();
+
+    /* create rfds and wfds */
     fd_set rfds, wfds;
-    int rc;
-    int desc_ready;
-    int max_sd=m_fd;
-    int new_sd;
-    int close_conn;
-    char buffer[120];
-    
     FD_ZERO(&rfds);
-    FD_SET(m_fd, &rfds);
-    int end_server = FALSE;
+    FD_ZERO(&wfds);
+
+    int max_fd = -1;
+    iter = m_evts.begin();
+    for (; iter != m_evts.end(); ++iter) {
+        io_event *evt = *iter;
+        if ('i' == evt->get_io_type()) {
+            FD_SET(evt->get_fd(), &rfds);
+        } else {
+            FD_SET(evt->get_fd(), &wfds);
+        }
+        if (evt->get_fd() > max_fd) {
+            max_fd = evt->get_fd();
+        }
+    }
+
     /*set timeout*/
     struct timeval tv;
     tv.tv_sec = timeout_ms / 1000;
     tv.tv_usec = timeout_ms % 1000 * 1000;
-    do{
-        memcpy(&wfds, &rfds, sizeof(rfds));
-        rc=select(max_sd+1, &rfds, NULL, NULL, &tv);
-        desc_ready=rc;
-        for(int i=0;i<max_sd && desc_ready>0;i++){
-            if(FD_ISSET(i, &wfds)){
-                desc_ready-=1;
-                if(i == m_fd){ //check to see if this is the listening socket
-                    do{
-                        struct sockaddr_in remote_addr;
-                        socklen_t remote_addr_len = sizeof(remote_addr);
-                        memset(&remote_addr, 0, sizeof(remote_addr));
-                        
-                        int new_sd = accept(m_fd, (struct sockaddr*)&remote_addr, &remote_addr_len);
-                        if(new_sd <0){
-                            if(errno!=EWOULDBLOCK){
-                                perror(" ACCEPT() failed");
-                                end_server= TRUE;
-                            }
-                            break;
-                        }
-                        FD_SET(new_sd, &rfds);
-                        if(new_sd >max_sd){
-                            max_sd = new_sd;
-                        }
-                    }
-                    while(new_sd != -1);
-                }
-                else{
-                    /*Descriptor i is readable*/
-                    close_conn=FALSE;
-                    do{
-                        rc=recv(i, buffer, sizeof(buffer), 0);
-                        if(rc<0){
-                            if(errno !=EWOULDBLOCK){
-                                perror("recv() failed");
-                                close_conn=TRUE;
-                            }
-                            break;
-                        }
-                        if(rc==0){
-                            close_conn=TRUE;
-                            break;
-                        }
-                        int len=rc;
-                        rc=send(i,buffer, len, 0);
-                        if(rc<0){
-                            perror("send() failed");
-                            close_conn=TRUE;
-                            break;
-                        }
-                    }
-                    while (TRUE);
-                    if(close_conn){
-                        close(i);
-                        FD_CLR(i, &rfds);
-                        if(i == max_sd){
-                            while(FD_SET(max_sd,&wfds) == FALSE)
-                                max_sd-=1;
-                        }
-                    }
-                }
-            }
+
+    /* wait for io event */
+    int ret = select(1 + max_fd, &rfds, &wfds, NULL, &tv);
+    if (ret < 0) {
+        RPC_WARNING("select() error, errno=%d", errno);
+        return;
+    }
+    if (ret == 0) {
+        return;
+    }
+
+    /* run state machine */
+    iter = m_evts.begin();
+    while (iter != m_evts.end()) {
+        io_event *evt = *iter;
+        fd_set *fds = NULL;
+        if ('i' == evt->get_io_type()) {
+            fds = &rfds;
+        } else {
+            fds = &wfds;
         }
-    }while (end_server == FALSE);
-    /*examin the I/O descriptors sets*/
-    
+        if (FD_ISSET(evt->get_fd(), fds)) {
+            iter = m_evts.erase(iter);
+            evt->on_event();
+        } else {
+            ++iter;
+        }
+    }
 }
 
-/*
- void svr_base::run_routine(int timeout_ms) {
- // create read file descriptors set
- fd_set rfds, wfds;
- FD_ZERO(&rfds);
- FD_SET(m_fd, &rfds);
- int rc;
- int desc_ready;
- int i;
- 
- // set timeout
- struct timeval tv;
- tv.tv_sec = timeout_ms / 1000;
- tv.tv_usec = timeout_ms % 1000 * 1000;
- 
- // examine the I/O descriptors sets
- if (select(m_fd + 1, &rfds, NULL, NULL, &tv) > 0) {
- 
- struct sockaddr_in remote_addr;
- socklen_t remote_addr_len = sizeof(remote_addr);
- memset(&remote_addr, 0, sizeof(remote_addr));
- 
- int fd = accept(m_fd, (struct sockaddr*)&remote_addr, &remote_addr_len);
- 
- if (-1 == fd) {
- RPC_WARNING("accept() error, errno=%d", errno);
- }
- else {
- // extract ip and port from remote_addr
- char ip[32] = { 0 };
- uint16_t port = ntohs(remote_addr.sin_port);
- strcpy(ip, inet_ntoa(remote_addr.sin_addr));
- RPC_DEBUG("incoming connection, fd=%d, ip=%s, port=%u", fd, ip, port);
- 
- // set fd to nonblock
- if (-1 == set_nonblock(fd)) {
- RPC_WARNING("set_nonblock() error, errno=%d", errno);
- }
- 
- // dispatch connection to specific thread
- m_thrd_mgr->proc_new_conn(fd, ip, port);
- }
- }
- }
- */
-
-
+void svr_base::on_dispatch_task(http_event *evt) {
+    m_thrd_dsptch->dispatch_task(evt);
+}
