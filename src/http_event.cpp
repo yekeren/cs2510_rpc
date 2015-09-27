@@ -151,11 +151,11 @@ void http_event::on_cmplt_pkg() {
 }
 
 /**
- * @brief notify process event
+ * @brief notify process event(multi-threads call)
  */
 void http_event::on_process() {
     RPC_DEBUG("compute %s", m_head.c_str());
-    this->set_response(m_head);
+    this->set_response(m_head + "\r\n\r\n" + m_body);
 
     this->set_state("write");
     this->set_io_type('o');

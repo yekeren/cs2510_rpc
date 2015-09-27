@@ -5,7 +5,7 @@
 #include <vector>
 #include <list>
 
-class http_event;
+class io_event;
 
 class svr_thrd {
     public:
@@ -44,13 +44,12 @@ class svr_thrd {
          */
         virtual void join();
 
-    public:
         /**
          * @brief add a computing task
          *
          * @param evt
          */
-        virtual void add_task(http_event *evt);
+        virtual void add_task(io_event *evt);
 
     private:
         /**
@@ -73,40 +72,7 @@ class svr_thrd {
 
         pthread_cond_t m_cond;
         pthread_mutex_t m_mutex;
-        std::list<http_event*> m_tasks;
-};
-
-class svr_thrd_dsptch {
-    public:
-        /**
-         * @brief construct 
-         */
-        svr_thrd_dsptch();
-
-        /**
-         * @brief distruct
-         */
-        virtual ~svr_thrd_dsptch();
-
-    public:
-        /**
-         * @brief dispatch computing task
-         *
-         * @param evt
-         */
-        virtual void dispatch_task(http_event *evt);
-
-        /**
-         * @brief set computing threads
-         *
-         * @param thrds
-         */
-        void set_thrds(std::vector<svr_thrd*> &thrds) { 
-            m_thrds = thrds;
-        }
-
-    private:
-        std::vector<svr_thrd*> m_thrds;
+        std::list<io_event*> m_tasks;
 };
 
 #endif

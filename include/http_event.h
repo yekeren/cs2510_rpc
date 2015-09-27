@@ -99,7 +99,7 @@ class http_event: public io_event {
 
     public:
         /**
-         * @brief notify process event
+         * @brief notify process event(multi-threads call)
          */
         virtual void on_process();
 

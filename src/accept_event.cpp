@@ -114,14 +114,7 @@ void accept_event::on_event() {
             fd, ip.c_str(), port);
 
     /* create new io event, bind fd with it */
-    http_event *evt = new http_event(m_svr);
-    evt->set_fd(fd);
-    evt->set_ip(ip);
-    evt->set_port(port);
-
-    evt->set_io_type('i');
-    evt->set_state("read_head");
-
+    io_event *evt = m_svr->create_event(fd, ip, port);
     m_svr->add_io_event(this);
     m_svr->add_io_event(evt);
 }

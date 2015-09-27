@@ -25,17 +25,17 @@ $(CLI_LIB): main_cli.o add_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o
 		ezxml.o 
 
 main_cli.o: main_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $(.SOURCE)
 
 add_stub_cli.o: src/add_stub_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_stub_cli.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $(.SOURCE)
 
 ds_svc.o: src/ds_svc.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svc.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $(.SOURCE)
 
 # making the svr_bin
-$(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o
+$(SVR_BIN): main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_BIN) main.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o
 
 main.o: main.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main.cpp
@@ -48,6 +48,12 @@ svr_thrd.o: src/svr_thrd.cpp
 
 io_event.o: src/io_event.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/io_event.cpp
+
+accept_event.o: src/accept_event.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/accept_event.cpp
+
+http_event.o: src/http_event.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/http_event.cpp
 
 # common library for both server and client
 rpc_net.o: src/rpc_net.cpp
@@ -62,5 +68,5 @@ ezxml.o: src/ezxml.c
 .PHONY: clean
 clean:
 	rm -f *.o
-	rm $(SVR_BIN)
-	rm $(CLI_LIB)
+	rm -f $(SVR_BIN)
+	rm -f $(CLI_LIB)

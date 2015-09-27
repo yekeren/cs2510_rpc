@@ -1,38 +1,141 @@
 #include "svr_base.h"
+#include <stdlib.h>
 #include <string.h>
 #include "rpc_log.h"
 #include "rpc_net.h"
-#define TRUE 1
-#define FALSE 0
+#include "accept_event.h"
+#include "http_event.h"
 
 /**************************************
  * svr_base
  **************************************/
-svr_base::svr_base() : m_thrd_dsptch(NULL), m_acc_evt(NULL) {
+/**
+ * @brief construct
+ */
+svr_base::svr_base() {
 }
 
+/**
+ * @brief destruct
+ */
 svr_base::~svr_base() {
-    if (NULL != m_acc_evt) {
-        delete m_acc_evt;
+    std::list<io_event*>::iterator iter;
+
+    iter = m_evts.begin();
+    for (; iter != m_evts.end(); ++iter) {
+        (*iter)->release();
     }
-    m_acc_evt = NULL;
+    iter = m_evts_appd.begin();
+    for (; iter != m_evts_appd.end(); ++iter) {
+        (*iter)->release();
+    }
 }
 
+/**
+ * @brief create process threads
+ *
+ * @param thrds_num
+ *
+ * @return 
+ */
+int svr_base::run(int thrds_num) {
+    m_thrds_pool.resize(thrds_num);
+    for (int i = 0; i < (int)m_thrds_pool.size(); ++i) {
+        m_thrds_pool[i] = new svr_thrd;
+        m_thrds_pool[i]->run();
+    }
+    return 0;
+}
+
+/**
+ * @brief stop process threads
+ */
+void svr_base::stop() {
+    for (int i = 0; i < (int)m_thrds_pool.size(); ++i) {
+        m_thrds_pool[i]->stop();
+    }
+}
+
+/**
+ * @brief join process threads
+ */
+void svr_base::join() {
+    for (int i = 0; i < (int)m_thrds_pool.size(); ++i) {
+        m_thrds_pool[i]->join();
+        delete m_thrds_pool[i];
+    }
+    m_thrds_pool.clear();
+}
+
+/**
+ * @brief bind to specific port
+ *
+ * @param port
+ * @param backlog
+ *
+ * @return 
+ */
 int svr_base::bind(uint16_t port, int backlog) {
-    m_acc_evt = new accept_event(this);
-    if (0 > m_acc_evt->bind(port, backlog)) {
+    accept_event *acc_evt = new accept_event(this);
+    if (0 > acc_evt->bind(port, backlog)) {
         RPC_WARNING("accept event bind() error, port=%u, backlog=%d", 
                 port, backlog);
         return -1;
     }
-    this->add_io_event(m_acc_evt);
+    this->add_io_event(acc_evt);
     return 0;
 }
 
+/**
+ * @brief create event
+ *
+ * @param fd
+ * @param ip
+ * @param port
+ *
+ * @return 
+ */
+io_event *svr_base::create_event(int fd,
+        const std::string &ip, unsigned short port) {
+
+    http_event *evt = new http_event(this);
+    evt->set_fd(fd);
+    evt->set_ip(ip);
+    evt->set_port(port);
+
+    evt->set_io_type('i');
+    evt->set_state("read_head");
+    return evt;
+}
+
+/**
+ * @brief add io event to select queue
+ *
+ * @param evt
+ */
 void svr_base::add_io_event(io_event* evt) {
+    evt->add_ref();
     m_evts_appd.push_back(evt);
 }
 
+/**
+ * @brief dispatch task into thread
+ *
+ * @param evt
+ */
+void svr_base::on_dispatch_task(io_event *evt) {
+    evt->add_ref();
+
+    int i = rand() % m_thrds_pool.size();
+    RPC_DEBUG("dispatch task to [%d]", i);
+    m_thrds_pool[i]->add_task(evt);
+}
+
+/**
+ * @brief routint
+ *
+ * @param timeout_ms
+ */
 void svr_base::run_routine(int timeout_ms){
     /* merge list */
     std::list<io_event*>::iterator iter = m_evts_appd.begin();
@@ -88,12 +191,9 @@ void svr_base::run_routine(int timeout_ms){
         if (FD_ISSET(evt->get_fd(), fds)) {
             iter = m_evts.erase(iter);
             evt->on_event();
+            evt->release();
         } else {
             ++iter;
         }
     }
-}
-
-void svr_base::on_dispatch_task(http_event *evt) {
-    m_thrd_dsptch->dispatch_task(evt);
 }

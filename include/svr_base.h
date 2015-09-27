@@ -8,28 +8,86 @@
 
 class svr_base {
     public:
+        /**
+         * @brief construct
+         */
         svr_base();
+
+        /**
+         * @brief destruct
+         */
         virtual ~svr_base();
 
     public:
-        void set_thrd_dsptch(svr_thrd_dsptch *dsptch) { m_thrd_dsptch = dsptch; }
+        /**
+         * @brief create process threads
+         *
+         * @param thrds_num
+         *
+         * @return 
+         */
+        int run(int thrds_num = 1);
 
-        int bind(unsigned short port, int backlog = 32);
+        /**
+         * @brief stop process threads
+         */
+        void stop();
 
-        void run_routine(int timeout_ms = 100);
-
-        void add_io_event(io_event* evt);
+        /**
+         * @brief join process threads
+         */
+        void join();
 
     public:
-        void on_dispatch_task(http_event *evt);
+        /**
+         * @brief bind to specific port
+         *
+         * @param port
+         * @param backlog
+         *
+         * @return 
+         */
+        int bind(unsigned short port, int backlog = 32);
+
+        /**
+         * @brief routint
+         *
+         * @param timeout_ms
+         */
+        void run_routine(int timeout_ms = 10);
+
+    public:
+        /**
+         * @brief create event
+         *
+         * @param fd
+         * @param ip
+         * @param port
+         *
+         * @return 
+         */
+        virtual io_event *create_event(int fd,
+                const std::string &ip, unsigned short port);
+
+        /**
+         * @brief dispatch task into thread
+         *
+         * @param evt
+         */
+        virtual void on_dispatch_task(io_event *evt);
+
+        /**
+         * @brief add io event to select queue
+         *
+         * @param evt
+         */
+        void add_io_event(io_event* evt);
 
     private:
+        std::vector<svr_thrd*> m_thrds_pool;
+
         std::list<io_event*> m_evts;
         std::list<io_event*> m_evts_appd;
-
-        svr_thrd_dsptch *m_thrd_dsptch;
-
-        accept_event *m_acc_evt;
 };
 
 #endif

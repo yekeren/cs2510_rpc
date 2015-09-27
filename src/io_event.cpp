@@ -38,6 +38,13 @@ void io_event::on_event() {
 }
 
 /**
+ * @brief notify process event(multi-threads call)
+ */
+void io_event::on_process() {
+    RPC_DEBUG("on_process");
+}
+
+/**
  * @brief add reference
  */
 void io_event::add_ref() {

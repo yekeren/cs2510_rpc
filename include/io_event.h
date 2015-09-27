@@ -23,6 +23,11 @@ class io_event {
          */
         virtual void on_event();
 
+        /**
+         * @brief notify process event(multi-threads call)
+         */
+        virtual void on_process();
+
     public:
         /**
          * @brief set file descriptor
