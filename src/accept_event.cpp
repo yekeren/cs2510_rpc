@@ -1,4 +1,5 @@
 #include "accept_event.h"
+#include <string.h>
 #include "rpc_net.h"
 #include "rpc_log.h"
 #include "svr_base.h"

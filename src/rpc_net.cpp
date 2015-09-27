@@ -1,5 +1,6 @@
 #include "rpc_net.h"
 #include <sys/time.h>
+#include <string.h>
 #include "rpc_log.h"
 
 #define MAX(x,y) ((x)>(y)?(x):(y))
