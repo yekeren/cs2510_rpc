@@ -1,6 +1,7 @@
-CC='gcc'
 CXX='g++'
-CXXFLAGS='-g'
+CXXFLAGS='-g' '-std=c++0x'
+CC='gcc'
+CFLAGS='-g'
 
 CLI_LIB='rpc_cli'
 SVR_DS='rpc'
@@ -67,7 +68,7 @@ rpc_http.o: src/rpc_http.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/rpc_http.cpp
 
 ezxml.o: src/ezxml.c
-	$(CC) $(CXXFLAGS) -I$(INCLUDE) -c src/ezxml.c
+	$(CC) $(CFLAGS) -I$(INCLUDE) -c src/ezxml.c
 
 .PHONY: clean
 clean:

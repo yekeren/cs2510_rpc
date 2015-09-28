@@ -8,7 +8,7 @@
 typedef std::map<std::string, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
 
 /* svc_name -> svr_insts_map_t */
-typedef std::unordered_map<std::string, svr_insts_map_t> svc_map_t;
+typedef std::unordered_map<std::string, svr_insts_map_t > svc_map_t;
 
 static svc_map_t g_svc_map;
 
