@@ -1,4 +1,5 @@
 #include "ds_svr.h"
+#include <string.h>
 #include "rpc_log.h"
 
 /**
