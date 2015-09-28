@@ -9,6 +9,34 @@ static void signal_proc(int signo) {
 }
 
 int main(int argc, char *argv[]) {
+
+#ifdef _WIN32
+       //define something for Windows (32-bit and 64-bit, this part is common)
+       #ifdef _WIN64
+          //define something for Windows (64-bit only)
+       #endif
+#elif __APPLE__
+    RPC_DEBUG("apple");
+        #include "TargetConditionals.h"
+        #if TARGET_IPHONE_SIMULATOR
+             // iOS Simulator
+        #elif TARGET_OS_IPHONE
+            // iOS device
+        #elif TARGET_OS_MAC
+            // Other kinds of Mac OS
+        #else
+            // Unsupported platform
+        #endif
+#elif __linux
+    RPC_DEBUG("linux");
+        // linux
+#elif __unix // all unices not caught above
+        // Unix
+#elif __posix
+        // POSIX
+#endif
+    exit(0);
+
     signal(SIGINT, signal_proc);
     signal(SIGTERM, signal_proc);
 
