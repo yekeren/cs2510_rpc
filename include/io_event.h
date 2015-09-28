@@ -2,12 +2,7 @@
 #define __IO_EVENT_H__
 
 #include "rpc_net.h"
-
-#ifdef __APPLE__
-#include <libkern/OSAtomic.h>
-#elif __linux
-#include <asm/atomic.h>
-#endif
+#include <pthread.h>
 
 class svr_base;
 
@@ -101,13 +96,14 @@ class io_event {
 
         int m_fd;
         char m_io_type;
-#ifdef __APPLE__
         int m_ref;
-#elif __linux
-        atomic_t m_ref;
-#endif
-
         unsigned long long m_timeout_ms;
+
+#ifdef __APPLE__
+        pthread_mutex_t m_lock;
+#elif __linux
+        pthread_spinlock_t m_lock;
+#endif
 };
 
 

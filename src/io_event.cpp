@@ -16,12 +16,13 @@ io_event::io_event(svr_base *svr):
     m_svr(svr), 
     m_fd(-1), 
     m_io_type('i'),
+    m_ref(0),
     m_timeout_ms(0) { 
 
 #ifdef __APPLE__
-    m_ref = 0;
+    pthread_mutex_init(&m_lock, NULL);
 #elif __linux
-    atomic_set(&m_ref, 0);
+    pthread_spin_init(&m_lock, PTHREAD_PROCESS_PRIVATE);
 #endif
 }
 
@@ -34,6 +35,12 @@ io_event::~io_event() {
         RPC_DEBUG("close fd, fd=%d", m_fd);
     }
     m_fd = -1;
+
+#ifdef __APPLE__
+    pthread_mutex_destroy(&m_lock);
+#elif __linux
+    pthread_spin_destroy(&m_lock);
+#endif
 }
 
 /**
@@ -61,10 +68,19 @@ void io_event::on_timeout() {
  * @brief add reference
  */
 void io_event::add_ref() {
+
 #ifdef __APPLE__
-    ++m_ref;
+    pthread_mutex_lock(&m_lock);
 #elif __linux
-    atomic_inc(&m_ref);
+    pthread_spin_lock(&m_lock);
+#endif
+
+    ++m_ref;
+
+#ifdef __APPLE__
+    pthread_mutex_unlock(&m_lock);
+#elif __linux
+    pthread_spin_unlock(&m_lock);
 #endif
 }
 
@@ -72,13 +88,21 @@ void io_event::add_ref() {
  * @brief release reference, delete if it equals 0
  */
 void io_event::release() {
+
 #ifdef __APPLE__
+    pthread_mutex_lock(&m_lock);
+#elif __linux
+    pthread_spin_lock(&m_lock);
+#endif
+
     if (--m_ref == 0) {
         delete this;
+        return;
     }
+
+#ifdef __APPLE__
+    pthread_mutex_unlock(&m_lock);
 #elif __linux
-    if (atomic_dec_and_test(&m_ref)) {
-        delete this;
-    }
+    pthread_spin_unlock(&m_lock);
 #endif
 }

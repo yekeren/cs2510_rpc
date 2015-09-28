@@ -15,8 +15,6 @@ int main(int argc, char *argv[]) {
     RPC_WARNING("running under linux");
 #endif
 
-    exit(0);
-
     signal(SIGINT, signal_proc);
     signal(SIGTERM, signal_proc);
 
