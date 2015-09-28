@@ -40,17 +40,24 @@ void *svr_thrd::run_routine(void *args) {
 void svr_thrd::run_routine() {
     RPC_INFO("thread started");
     while (this->is_running()) {
-        struct timespec to;
-        to.tv_sec = time(NULL) + 1;
-        to.tv_nsec = 0;
+
+        io_event *evt = NULL;
 
         /* pop a task */
         pthread_mutex_lock(&m_mutex);
-        pthread_cond_timedwait(&m_cond, &m_mutex, &to);
-        io_event *evt = NULL;
         if (m_tasks.size() > 0) {
             evt = m_tasks.front();
             m_tasks.pop_front();
+        } else {
+            struct timespec to;
+            to.tv_sec = time(NULL) + 1;
+            to.tv_nsec = 0;
+
+            pthread_cond_timedwait(&m_cond, &m_mutex, &to);
+            if (m_tasks.size() > 0) {
+                evt = m_tasks.front();
+                m_tasks.pop_front();
+            }
         }
         pthread_mutex_unlock(&m_mutex);
 
@@ -105,6 +112,8 @@ int svr_thrd::run() {
  * @param evt
  */
 void svr_thrd::add_task(io_event *evt) {
+
+    evt->add_ref();
 
     pthread_mutex_lock(&m_mutex);
 

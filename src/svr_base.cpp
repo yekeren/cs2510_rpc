@@ -14,7 +14,7 @@
  * @brief construct
  */
 svr_base::svr_base() {
-    pthread_mutex_init(&m_mutex, NULL);
+    m_lock.init();
 }
 
 /**
@@ -31,7 +31,7 @@ svr_base::~svr_base() {
     for (; iter != m_evts_appd.end(); ++iter) {
         (*iter)->release();
     }
-    pthread_mutex_destroy(&m_mutex);
+    m_lock.destroy();
 }
 
 /**
@@ -120,9 +120,9 @@ io_event *svr_base::create_event(int fd,
 void svr_base::add_io_event(io_event* evt) {
     evt->add_ref();
 
-    pthread_mutex_lock(&m_mutex);
+    m_lock.lock();
     m_evts_appd.push_back(evt);
-    pthread_mutex_unlock(&m_mutex);
+    m_lock.unlock();
 }
 
 /**
@@ -131,7 +131,6 @@ void svr_base::add_io_event(io_event* evt) {
  * @param evt
  */
 void svr_base::on_dispatch_task(io_event *evt) {
-    evt->add_ref();
 
     int i = rand() % m_thrds_pool.size();
     RPC_DEBUG("dispatch task to [%d]", i);
@@ -145,13 +144,13 @@ void svr_base::on_dispatch_task(io_event *evt) {
  */
 void svr_base::run_routine(int timeout_ms){
     /* merge list */
-    pthread_mutex_lock(&m_mutex);
+    m_lock.lock();
     std::list<io_event*>::iterator iter = m_evts_appd.begin();
     for (; iter != m_evts_appd.end(); ++iter) {
         m_evts.push_back(*iter);
     }
     m_evts_appd.clear();
-    pthread_mutex_unlock(&m_mutex);
+    m_lock.unlock();
 
     /* create rfds and wfds */
     fd_set rfds, wfds;

@@ -19,11 +19,7 @@ io_event::io_event(svr_base *svr):
     m_ref(0),
     m_timeout_ms(0) { 
 
-#ifdef __APPLE__
-    pthread_mutex_init(&m_lock, NULL);
-#elif __linux
-    pthread_spin_init(&m_lock, PTHREAD_PROCESS_PRIVATE);
-#endif
+    m_lock.init();
 }
 
 /**
@@ -36,11 +32,7 @@ io_event::~io_event() {
     }
     m_fd = -1;
 
-#ifdef __APPLE__
-    pthread_mutex_destroy(&m_lock);
-#elif __linux
-    pthread_spin_destroy(&m_lock);
-#endif
+    m_lock.destroy();
 }
 
 /**
@@ -69,19 +61,9 @@ void io_event::on_timeout() {
  */
 void io_event::add_ref() {
 
-#ifdef __APPLE__
-    pthread_mutex_lock(&m_lock);
-#elif __linux
-    pthread_spin_lock(&m_lock);
-#endif
-
+    m_lock.lock();
     ++m_ref;
-
-#ifdef __APPLE__
-    pthread_mutex_unlock(&m_lock);
-#elif __linux
-    pthread_spin_unlock(&m_lock);
-#endif
+    m_lock.unlock();
 }
 
 /**
@@ -89,20 +71,13 @@ void io_event::add_ref() {
  */
 void io_event::release() {
 
-#ifdef __APPLE__
-    pthread_mutex_lock(&m_lock);
-#elif __linux
-    pthread_spin_lock(&m_lock);
-#endif
+    m_lock.lock();
 
     if (--m_ref == 0) {
         delete this;
+        /* because the instance is already deleted, m_lock is not valid, 'return' here */
         return;
     }
 
-#ifdef __APPLE__
-    pthread_mutex_unlock(&m_lock);
-#elif __linux
-    pthread_spin_unlock(&m_lock);
-#endif
+    m_lock.unlock();
 }

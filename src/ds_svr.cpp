@@ -1,6 +1,16 @@
 #include "ds_svr.h"
 #include <string.h>
+#include <map>
+#include <unordered_map>
 #include "rpc_log.h"
+
+/* svr_id -> <svr_inst_t, check_time> */
+typedef std::map<std::string, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
+
+/* svc_name -> svr_insts_map_t */
+typedef std::unordered_map<std::string, svr_insts_map_t> svc_map_t;
+
+static svc_map_t g_svc_map;
 
 /**
  * @brief construct
@@ -81,8 +91,10 @@ void ds_event::process_register(const std::string &uri,
         process_default(uri, req_body, rsp_body);
         return;
     } 
+    RPC_WARNING("%d", root == NULL);
 
     svr_inst_t svr;
+    svr.port = 0;
     if (ezxml_child(root, "id")) {
         svr.id = ezxml_child(root, "id")->txt;
     }

@@ -2,7 +2,7 @@
 #define __IO_EVENT_H__
 
 #include "rpc_net.h"
-#include <pthread.h>
+#include "rpc_lock.h"
 
 class svr_base;
 
@@ -99,11 +99,7 @@ class io_event {
         int m_ref;
         unsigned long long m_timeout_ms;
 
-#ifdef __APPLE__
-        pthread_mutex_t m_lock;
-#elif __linux
-        pthread_spinlock_t m_lock;
-#endif
+        spin_lock m_lock;
 };
 
 
