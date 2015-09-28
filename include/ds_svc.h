@@ -3,14 +3,7 @@
 
 #include <string>
 #include <vector>
-
-struct svr_inst_t {
-    std::string id;
-    std::string name;
-    std::string version;
-    std::string ip;
-    unsigned short port;
-};
+#include "common_def.h"
 
 class ds_svc {
     protected:
