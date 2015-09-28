@@ -16,7 +16,8 @@ io_event::io_event(svr_base *svr):
     m_svr(svr), 
     m_fd(-1), 
     m_io_type('i'),
-    m_ref(0){ 
+    m_ref(0),
+    m_timeout_ms(0) { 
 }
 
 /**
@@ -42,6 +43,13 @@ void io_event::on_event() {
  */
 void io_event::on_process() {
     RPC_DEBUG("on_process");
+}
+
+/**
+ * @brief notify timeout event
+ */
+void io_event::on_timeout() {
+    RPC_DEBUG("on_timeout");
 }
 
 /**

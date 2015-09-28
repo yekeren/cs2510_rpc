@@ -4,6 +4,7 @@
 #include "rpc_net.h"
 #include "rpc_log.h"
 #include "svr_base.h"
+#include "common_def.h"
 
 /**************************************
  * http_event
@@ -192,7 +193,8 @@ void http_event::on_process() {
     RPC_DEBUG("compute %s", m_head.c_str());
     this->set_response(m_head + "\r\n\r\n" + m_body);
 
-    this->set_state("write");
     this->set_io_type('o');
+    this->set_state("write");
+    this->set_timeout(HTTP_SEND_TIMEOUT);
     m_svr->add_io_event(this);
 }

@@ -161,5 +161,6 @@ io_event *ds_svr::create_event(int fd,
 
     evt->set_io_type('i');
     evt->set_state("read_head");
+    evt->set_timeout(HTTP_RECV_TIMEOUT);
     return (io_event*)evt;
 }

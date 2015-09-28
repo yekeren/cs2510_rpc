@@ -5,6 +5,7 @@
 #include "rpc_net.h"
 #include "accept_event.h"
 #include "http_event.h"
+#include "common_def.h"
 
 /**************************************
  * svr_base
@@ -13,6 +14,7 @@
  * @brief construct
  */
 svr_base::svr_base() {
+    pthread_mutex_init(&m_mutex, NULL);
 }
 
 /**
@@ -29,6 +31,7 @@ svr_base::~svr_base() {
     for (; iter != m_evts_appd.end(); ++iter) {
         (*iter)->release();
     }
+    pthread_mutex_destroy(&m_mutex);
 }
 
 /**
@@ -105,6 +108,7 @@ io_event *svr_base::create_event(int fd,
 
     evt->set_io_type('i');
     evt->set_state("read_head");
+    evt->set_timeout(HTTP_RECV_TIMEOUT);
     return evt;
 }
 
@@ -115,7 +119,10 @@ io_event *svr_base::create_event(int fd,
  */
 void svr_base::add_io_event(io_event* evt) {
     evt->add_ref();
+
+    pthread_mutex_lock(&m_mutex);
     m_evts_appd.push_back(evt);
+    pthread_mutex_unlock(&m_mutex);
 }
 
 /**
@@ -138,11 +145,13 @@ void svr_base::on_dispatch_task(io_event *evt) {
  */
 void svr_base::run_routine(int timeout_ms){
     /* merge list */
+    pthread_mutex_lock(&m_mutex);
     std::list<io_event*>::iterator iter = m_evts_appd.begin();
     for (; iter != m_evts_appd.end(); ++iter) {
         m_evts.push_back(*iter);
     }
     m_evts_appd.clear();
+    pthread_mutex_unlock(&m_mutex);
 
     /* create rfds and wfds */
     fd_set rfds, wfds;
@@ -174,23 +183,35 @@ void svr_base::run_routine(int timeout_ms){
         RPC_WARNING("select() error, errno=%d", errno);
         return;
     }
-    if (ret == 0) {
-        return;
-    }
 
     /* run state machine */
+    if (ret > 0) {
+        iter = m_evts.begin();
+        while (iter != m_evts.end()) {
+            io_event *evt = *iter;
+            fd_set *fds = NULL;
+            if ('i' == evt->get_io_type()) {
+                fds = &rfds;
+            } else {
+                fds = &wfds;
+            }
+            if (FD_ISSET(evt->get_fd(), fds)) {
+                iter = m_evts.erase(iter);
+                evt->on_event();
+                evt->release();
+            } else {
+                ++iter;
+            }
+        }
+    }
+
+    /* check for timeout */
     iter = m_evts.begin();
     while (iter != m_evts.end()) {
         io_event *evt = *iter;
-        fd_set *fds = NULL;
-        if ('i' == evt->get_io_type()) {
-            fds = &rfds;
-        } else {
-            fds = &wfds;
-        }
-        if (FD_ISSET(evt->get_fd(), fds)) {
+        if (evt->is_timeout()) {
             iter = m_evts.erase(iter);
-            evt->on_event();
+            evt->on_timeout();
             evt->release();
         } else {
             ++iter;

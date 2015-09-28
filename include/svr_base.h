@@ -88,6 +88,7 @@ class svr_base {
 
         std::list<io_event*> m_evts;
         std::list<io_event*> m_evts_appd;
+        pthread_mutex_t m_mutex;
 };
 
 #endif
