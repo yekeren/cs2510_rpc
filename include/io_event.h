@@ -3,6 +3,12 @@
 
 #include "rpc_net.h"
 
+#ifdef __APPLE__
+#include <libkern/OSAtomic.h>
+#elif __linux
+#include <asm/atomic.h>
+#endif
+
 class svr_base;
 
 class io_event {
@@ -95,7 +101,11 @@ class io_event {
 
         int m_fd;
         char m_io_type;
+#ifdef __APPLE__
         int m_ref;
+#elif __linux
+        atomic_t m_ref;
+#endif
 
         unsigned long long m_timeout_ms;
 };
