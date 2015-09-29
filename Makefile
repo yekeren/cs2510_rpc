@@ -13,7 +13,8 @@ cchighlight=\033[0;31m
 ccend=\033[0m
 
 #all: $(SVR_DS) $(CLI_LIB)
-all: $(CLI_LIB)
+#all: $(CLI_LIB)
+all: $(SVR_DS)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib

@@ -1,16 +1,11 @@
 #include "ds_svr.h"
 #include <string.h>
-#include <map>
-#include <unordered_map>
+#include "rpc_net.h"
 #include "rpc_log.h"
 
-/* svr_id -> <svr_inst_t, check_time> */
-typedef std::map<std::string, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
-
-/* svc_name -> svr_insts_map_t */
-typedef std::unordered_map<std::string, svr_insts_map_t > svc_map_t;
-
-static svc_map_t g_svc_map;
+/**************************************
+ * ds_event
+ **************************************/
 
 /**
  * @brief construct
@@ -79,9 +74,10 @@ void ds_event::process_default(const std::string &uri,
  * @param uri
  * @param req_body
  * @param rsp_body
+ * @param flag
  */
 void ds_event::process_register(const std::string &uri,
-        const std::string &req_body, std::string &rsp_body) {
+        const std::string &req_body, std::string &rsp_body, bool flag) {
 
     /* parse parameter in the xml */
     ezxml_t root = ezxml_parse_str(
@@ -118,9 +114,11 @@ void ds_event::process_register(const std::string &uri,
     ezxml_free(root);
 
     /* succ */
-    RPC_INFO("register succ, id=%s, name=%s, version=%s, ip=%s, port=%u", 
-            svr.id.c_str(), svr.name.c_str(), svr.version.c_str(),
-            svr.ip.c_str(), svr.port);
+    if (flag) {
+        ((ds_svr*)m_svr)->do_register(svr);
+    } else {
+        ((ds_svr*)m_svr)->do_unregister(svr);
+    }
 
     root = ezxml_new("message");
     ezxml_set_txt(root, "succ");
@@ -137,8 +135,29 @@ void ds_event::process_register(const std::string &uri,
  */
 void ds_event::process_get_insts_by_name(const std::string &uri,
         const std::string &req_body, std::string &rsp_body) {
+
+    /* invoke get insts by name */
     std::string name = uri.substr(strlen("/get_insts_by_name?name="));
-    RPC_DEBUG("find insts by name, name=%s", name.c_str());
+    std::vector<svr_inst_t> insts_list;
+    ((ds_svr*)m_svr)->do_get_insts_by_name(name, insts_list);
+
+    /* create response */
+    ezxml_t root = ezxml_new("service");
+    for (int i = 0; i < (int)insts_list.size(); ++i) {
+        svr_inst_t &svr = insts_list[i];
+
+        ezxml_t child = ezxml_add_child(root, "server", i);
+        ezxml_set_txt(ezxml_add_child(child, "id", 0), svr.id.c_str());
+        ezxml_set_txt(ezxml_add_child(child, "name", 0), svr.name.c_str());
+        ezxml_set_txt(ezxml_add_child(child, "version", 0), svr.version.c_str());
+        ezxml_set_txt(ezxml_add_child(child, "ip", 0), svr.ip.c_str());
+        char buf[32] = { 0 };
+        sprintf(buf, "%u", svr.port);
+        ezxml_set_txt(ezxml_add_child(child, "port", 0), buf);
+    }
+
+    rsp_body = ezxml_toxml(root);
+    ezxml_free(root);
 }
 
 /**
@@ -152,12 +171,31 @@ void ds_event::dsptch_http_request(const std::string &uri,
         const std::string &req_body, std::string &rsp_body) {
 
     if (uri.find("/register") == 0) {
-        process_register(uri, req_body, rsp_body);
+        process_register(uri, req_body, rsp_body, true);
+    } else if (uri.find("/unregister") == 0) {
+        process_register(uri, req_body, rsp_body, false);
     } else if (uri.find("/get_insts_by_name?name=") == 0) {
         process_get_insts_by_name(uri, req_body, rsp_body);
     } else {
         process_default(uri, req_body, rsp_body);
     }
+}
+
+/**************************************
+ * ds_svr
+ **************************************/
+/**
+ * @brief construct
+ */
+ds_svr::ds_svr() {
+    m_lock.init();
+}
+
+/**
+ * @brief destruct
+ */
+ds_svr::~ds_svr() {
+    m_lock.destroy();
 }
 
 /**
@@ -181,4 +219,71 @@ io_event *ds_svr::create_event(int fd,
     evt->set_state("read_head");
     evt->set_timeout(HTTP_RECV_TIMEOUT);
     return (io_event*)evt;
+}
+
+/**
+ * @brief register svr
+ *
+ * @param svr
+ */
+void ds_svr::do_register(svr_inst_t &svr) {
+    /* insert server into the hash */
+    m_lock.lock();
+    if (0 == m_svc_map.count(svr.name)) {
+        svr_insts_map_t insts_map;
+        m_svc_map[svr.name] = insts_map;
+    }
+    svr_insts_map_t &insts_map = m_svc_map[svr.name];
+    insts_map[svr.id] = std::pair<svr_inst_t, unsigned long long>(
+            svr, get_cur_msec());
+    m_lock.unlock();
+
+    /* record log */
+    RPC_INFO("register succ, id=%s, name=%s, version=%s, ip=%s, port=%u", 
+            svr.id.c_str(), svr.name.c_str(), svr.version.c_str(),
+            svr.ip.c_str(), svr.port);
+}
+
+/**
+ * @brief unregister svr
+ *
+ * @param svr
+ */
+void ds_svr::do_unregister(svr_inst_t &svr) {
+    /* remove server from the hash */
+    m_lock.lock();
+    if (m_svc_map.count(svr.name) > 0) {
+        svr_insts_map_t &insts_map = m_svc_map[svr.name];
+        insts_map.erase(svr.id);
+    }
+    m_lock.unlock();
+
+    /* record log */
+    RPC_INFO("unregister succ, id=%s, name=%s, version=%s, ip=%s, port=%u", 
+            svr.id.c_str(), svr.name.c_str(), svr.version.c_str(),
+            svr.ip.c_str(), svr.port);
+}
+
+/**
+ * @brief get server insts by name of service
+ *
+ * @param name
+ * @param svr_insts_list
+ */
+void ds_svr::do_get_insts_by_name(const std::string &name,
+        std::vector<svr_inst_t> &svr_insts_list) {
+    /* get insts by name */
+    m_lock.lock();
+    if (m_svc_map.count(name) > 0) {
+        svr_insts_map_t &insts_map = m_svc_map[name];
+        svr_insts_map_t::iterator iter;
+        for (iter = insts_map.begin(); iter != insts_map.end(); ++iter) {
+            svr_insts_list.push_back(iter->second.first);
+            svr_inst_t &svr = iter->second.first;
+            RPC_DEBUG("get insts by name, id=%s, name=%s, version=%s, ip=%s, port=%u", 
+                    svr.id.c_str(), svr.name.c_str(), svr.version.c_str(),
+                    svr.ip.c_str(), svr.port);
+        }
+    }
+    m_lock.unlock();
 }

@@ -1,10 +1,18 @@
 #ifndef __DS_SVR_H__
 #define __DS_SVR_H__
 
+#include <map>
+#include <unordered_map>
 #include "http_event.h"
 #include "common_def.h"
 #include "ezxml.h"
 #include "svr_base.h"
+
+/* svr_id -> <svr_inst_t, check_time> */
+typedef std::map<std::string, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
+
+/* svc_name -> svr_insts_map_t */
+typedef std::unordered_map<std::string, svr_insts_map_t > svc_map_t;
 
 class ds_event: public http_event {
     public:
@@ -48,9 +56,10 @@ class ds_event: public http_event {
          * @param uri
          * @param req_body
          * @param rsp_body
+         * @param flag: true for register and false for unregister
          */
         void process_register(const std::string &uri,
-                const std::string &req_body, std::string &rsp_body);
+                const std::string &req_body, std::string &rsp_body, bool flag);
 
         /**
          * @brief process get_insts_by_name request
@@ -66,6 +75,17 @@ class ds_event: public http_event {
 class ds_svr: public svr_base {
     public:
         /**
+         * @brief construct
+         */
+        ds_svr();
+
+        /**
+         * @brief destruct
+         */
+        virtual ~ds_svr();
+
+    public:
+        /**
          * @brief create event
          *
          * @param fd
@@ -76,6 +96,34 @@ class ds_svr: public svr_base {
          */
         virtual io_event *create_event(int fd,
                 const std::string &ip, unsigned short port);
+
+    public:
+        /**
+         * @brief register svr
+         *
+         * @param svr
+         */
+        void do_register(svr_inst_t &svr);
+
+        /**
+         * @brief unregister svr
+         *
+         * @param svr
+         */
+        void do_unregister(svr_inst_t &svr);
+
+        /**
+         * @brief get server insts by name of service
+         *
+         * @param name
+         * @param svr_insts_list
+         */
+        void do_get_insts_by_name(const std::string &name,
+                std::vector<svr_inst_t> &svr_insts_list);
+
+    private:
+        spin_lock m_lock;
+        svc_map_t m_svc_map;
 };
 
 #endif
