@@ -13,7 +13,7 @@ cchighlight=\033[0;31m
 ccend=\033[0m
 
 #all: $(SVR_DS) $(CLI_LIB)
-all: $(SVR_DS)
+all: $(CLI_LIB)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
@@ -27,13 +27,13 @@ $(CLI_LIB): main_cli.o add_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o
 		ezxml.o 
 
 main_cli.o: main_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $(.SOURCE)
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
 
 add_stub_cli.o: src/add_stub_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $(.SOURCE)
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_stub_cli.cpp
 
 ds_svc.o: src/ds_svc.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c $(.SOURCE)
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svc.cpp
 
 # compiling svr_ds
 $(SVR_DS): main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o

@@ -91,29 +91,34 @@ void ds_event::process_register(const std::string &uri,
         process_default(uri, req_body, rsp_body);
         return;
     } 
-    RPC_WARNING("%d", root == NULL);
 
+    /* validation */
+    if (!ezxml_child(root, "id")
+            || !ezxml_child(root, "name")
+            || !ezxml_child(root, "version")
+            || !ezxml_child(root, "ip")
+            || !ezxml_child(root, "port")) {
+
+        ezxml_free(root);
+
+        process_default(uri, req_body, rsp_body);
+        RPC_WARNING("missing data in the register request");
+        return;
+    }
+
+    /* register */
     svr_inst_t svr;
-    svr.port = 0;
-    if (ezxml_child(root, "id")) {
-        svr.id = ezxml_child(root, "id")->txt;
-    }
-    if (ezxml_child(root, "name")) {
-        svr.name = ezxml_child(root, "name")->txt;
-    }
-    if (ezxml_child(root, "version")) {
-        svr.version = ezxml_child(root, "version")->txt;
-    }
-    if (ezxml_child(root, "ip")) {
-        svr.ip = ezxml_child(root, "ip")->txt;
-    }
-    if (ezxml_child(root, "port")) {
-        svr.port = atoi(ezxml_child(root, "port")->txt);
-    }
+
+    svr.id = ezxml_child(root, "id")->txt;
+    svr.name = ezxml_child(root, "name")->txt;
+    svr.version = ezxml_child(root, "version")->txt;
+    svr.ip = ezxml_child(root, "ip")->txt;
+    svr.port = atoi(ezxml_child(root, "port")->txt);
+
     ezxml_free(root);
 
     /* succ */
-    RPC_DEBUG("register succ, id=%s, name=%s, version=%s, ip=%s, port=%u", 
+    RPC_INFO("register succ, id=%s, name=%s, version=%s, ip=%s, port=%u", 
             svr.id.c_str(), svr.name.c_str(), svr.version.c_str(),
             svr.ip.c_str(), svr.port);
 

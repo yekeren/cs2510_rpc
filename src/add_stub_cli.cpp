@@ -28,6 +28,7 @@ int add(int a, int b) {
             svr_inst.ip.c_str(), svr_inst.port);
 
     /* data marshalling */
+    return 0;
     add_proto ap;
     ap.set_a(a);
     ap.set_b(b);

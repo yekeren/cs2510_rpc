@@ -106,7 +106,7 @@ int ds_svc::get_insts_by_name(const std::string &name,
     std::string rsp_head, rsp_body;
 
     req_head += std::string("GET /server-config.xml?name=") + name + " HTTP/1.1\r\n";
-    req_head += "Host: "DIR_SVR_HOST"\r\n";
+    req_head += "Host: " DIR_SVR_HOST "\r\n";
     req_head += "\r\n\r\n";
 
     int ret = http_talk(ips_list, DIR_SVR_PORT, 

@@ -35,6 +35,10 @@ class add_proto {
         }
 
     public:
+        void create_buffer(int len) {
+        }
+
+    public:
         void attach_buf(char *buf, int buf_len) {
             memcpy(m_buf, buf, buf_len);
         }
@@ -44,7 +48,7 @@ class add_proto {
         }
 
     private:
-        char m_buf[12];
+        char *m_buf;
 };
 
 #endif
