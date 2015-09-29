@@ -34,10 +34,11 @@ class ds_event: public http_event {
          *
          * @param uri
          * @param req_body
+         * @param rsp_head
          * @param rsp_body
          */
         void dsptch_http_request(const std::string &uri, 
-                const std::string &req_body, std::string &rsp_body);
+                const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
 
     private:
         /**
@@ -45,31 +46,34 @@ class ds_event: public http_event {
          *
          * @param uri
          * @param req_body
+         * @param rsp_head
          * @param rsp_body
          */
         void process_default(const std::string &uri,
-                const std::string &req_body, std::string &rsp_body);
+                const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
 
         /**
          * @brief process register request
          *
          * @param uri
          * @param req_body
+         * @param rsp_head
          * @param rsp_body
          * @param flag: true for register and false for unregister
          */
         void process_register(const std::string &uri,
-                const std::string &req_body, std::string &rsp_body, bool flag);
+                const std::string &req_body, std::string &rsp_head, std::string &rsp_body, bool flag);
 
         /**
          * @brief process get_insts_by_name request
          *
          * @param uri
          * @param req_body
+         * @param rsp_head
          * @param rsp_body
          */
         void process_get_insts_by_name(const std::string &uri,
-                const std::string &req_body, std::string &rsp_body);
+                const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
 };
 
 class ds_svr: public svr_base {

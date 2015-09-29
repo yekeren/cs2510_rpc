@@ -2,6 +2,7 @@
 #include <string.h>
 #include "rpc_net.h"
 #include "rpc_log.h"
+#include "template.h"
 
 /**************************************
  * ds_event
@@ -30,17 +31,9 @@ void ds_event::on_process() {
             get_method().c_str(), get_uri().c_str(), get_version().c_str());
 
     std::string rsp_head, rsp_body;
-    this->dsptch_http_request(get_uri(), req_body, rsp_body);
+    this->dsptch_http_request(get_uri(), req_body, rsp_head, rsp_body);
 
     /* set response */
-    rsp_head += "HTTP/1.1 200 OK\r\n";
-    rsp_head += "Content-Type: text/xml\r\n";
-    rsp_head += "Content-Length: ";
-    char buf[32] = { 0 };
-    sprintf(buf, "%lu", rsp_body.size());
-    rsp_head += buf;
-    rsp_head += "\r\n\r\n";
-
     this->set_response(rsp_head + rsp_body);
 
     this->set_state("write");
@@ -53,10 +46,11 @@ void ds_event::on_process() {
  *
  * @param uri
  * @param req_body
+ * @param rsp_head
  * @param rsp_body
  */
 void ds_event::process_default(const std::string &uri,
-        const std::string &req_body, std::string &rsp_body) {
+        const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
     RPC_WARNING("invalid request from client, uri=%s, ip=%s, port=%u", 
             uri.c_str(), get_ip().c_str(), get_port());
@@ -64,8 +58,9 @@ void ds_event::process_default(const std::string &uri,
     ezxml_t root = ezxml_new("message");
     ezxml_set_txt(root, "invalid request");
     rsp_body = ezxml_toxml(root);
-
     ezxml_free(root);
+
+    rsp_head = gen_http_head("404 Not Found", rsp_body.size());
 }
 
 /**
@@ -73,18 +68,19 @@ void ds_event::process_default(const std::string &uri,
  *
  * @param uri
  * @param req_body
+ * @param rsp_head
  * @param rsp_body
  * @param flag
  */
 void ds_event::process_register(const std::string &uri,
-        const std::string &req_body, std::string &rsp_body, bool flag) {
+        const std::string &req_body, std::string &rsp_head, std::string &rsp_body, bool flag) {
 
     /* parse parameter in the xml */
     ezxml_t root = ezxml_parse_str(
             (char*)req_body.data(), req_body.size());
     if (NULL == root) {
         /* xml parse error */
-        process_default(uri, req_body, rsp_body);
+        process_default(uri, req_body, rsp_head, rsp_body);
         return;
     } 
 
@@ -97,7 +93,7 @@ void ds_event::process_register(const std::string &uri,
 
         ezxml_free(root);
 
-        process_default(uri, req_body, rsp_body);
+        process_default(uri, req_body, rsp_head, rsp_body);
         RPC_WARNING("missing data in the register request");
         return;
     }
@@ -124,6 +120,8 @@ void ds_event::process_register(const std::string &uri,
     ezxml_set_txt(root, "succ");
     rsp_body = ezxml_toxml(root);
     ezxml_free(root);
+
+    rsp_head = gen_http_head("200 OK", rsp_body.size());
 }
 
 /**
@@ -131,10 +129,11 @@ void ds_event::process_register(const std::string &uri,
  *
  * @param uri
  * @param req_body
+ * @param rsp_head
  * @param rsp_body
  */
 void ds_event::process_get_insts_by_name(const std::string &uri,
-        const std::string &req_body, std::string &rsp_body) {
+        const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
     /* invoke get insts by name */
     std::string name = uri.substr(strlen("/get_insts_by_name?name="));
@@ -155,9 +154,10 @@ void ds_event::process_get_insts_by_name(const std::string &uri,
         sprintf(buf, "%u", svr.port);
         ezxml_set_txt(ezxml_add_child(child, "port", 0), buf);
     }
-
     rsp_body = ezxml_toxml(root);
     ezxml_free(root);
+
+    rsp_head = gen_http_head("200 OK", rsp_body.size());
 }
 
 /**
@@ -165,19 +165,20 @@ void ds_event::process_get_insts_by_name(const std::string &uri,
  *
  * @param uri
  * @param req_body
+ * @param rsp_head
  * @param rsp_body
  */
 void ds_event::dsptch_http_request(const std::string &uri, 
-        const std::string &req_body, std::string &rsp_body) {
+        const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
     if (uri.find("/register") == 0) {
-        process_register(uri, req_body, rsp_body, true);
+        process_register(uri, req_body, rsp_head, rsp_body, true);
     } else if (uri.find("/unregister") == 0) {
-        process_register(uri, req_body, rsp_body, false);
+        process_register(uri, req_body, rsp_head, rsp_body, false);
     } else if (uri.find("/get_insts_by_name?name=") == 0) {
-        process_get_insts_by_name(uri, req_body, rsp_body);
+        process_get_insts_by_name(uri, req_body, rsp_head, rsp_body);
     } else {
-        process_default(uri, req_body, rsp_body);
+        process_default(uri, req_body, rsp_head, rsp_body);
     }
 }
 
