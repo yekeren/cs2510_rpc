@@ -6,6 +6,7 @@ CFLAGS='-g'
 CLI_LIB='rpc_cli'
 SVR_DS='rpc'
 SVR_DS='svr_ds'
+SVR_CS='svr_cs'
 
 INCLUDE='./include'
 
@@ -14,7 +15,7 @@ ccend=\033[0m
 
 #all: $(SVR_DS) $(CLI_LIB)
 #all: $(CLI_LIB)
-all: $(SVR_DS)
+all: $(SVR_DS) $(SVR_CS)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
@@ -40,6 +41,12 @@ ds_svc.o: src/ds_svc.cpp
 $(SVR_DS): main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_DS) main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o
 
+$(SVR_CS): main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o
+
+main_svr_cs.o: main_svr_cs.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_svr_cs.cpp
+
 main_svr_ds.o: main_svr_ds.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_svr_ds.cpp
 
@@ -60,6 +67,9 @@ http_event.o: src/http_event.cpp
 
 ds_svr.o: src/ds_svr.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svr.cpp
+
+cs_svr.o: src/cs_svr.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/cs_svr.cpp
 
 # common library for both server and client
 rpc_net.o: src/rpc_net.cpp
