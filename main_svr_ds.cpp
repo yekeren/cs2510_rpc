@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
     /* initialize server */
     ds_svr *svr = new ds_svr;
     assert(0 == svr->run(2));
-    assert(0 == svr->bind(8001));
+    assert(0 == svr->bind(8000));
 
     while (running) {
         svr->run_routine(10);

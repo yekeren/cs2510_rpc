@@ -94,7 +94,8 @@ void ds_event::process_register(const std::string &uri,
         ezxml_free(root);
 
         process_default(uri, req_body, rsp_head, rsp_body);
-        RPC_WARNING("missing data in the register request");
+        RPC_WARNING("missing data in the register request, %s", 
+                req_body.c_str());
         return;
     }
 

@@ -3,6 +3,7 @@
 #include <string.h>
 #include "rpc_log.h"
 #include "rpc_net.h"
+#include "rpc_http.h"
 #include "accept_event.h"
 #include "http_event.h"
 #include "common_def.h"
@@ -14,6 +15,7 @@
  * @brief construct
  */
 svr_base::svr_base() {
+    m_last_check_msec = 0;
     m_lock.init();
 }
 
@@ -68,6 +70,98 @@ void svr_base::join() {
         delete m_thrds_pool[i];
     }
     m_thrds_pool.clear();
+}
+
+/**
+ * @brief register to directory server
+ *
+ * @param ip
+ * @param port
+ * @param conf_file
+ *
+ * @return 
+ */
+int svr_base::register_service(const std::string &ip, 
+        unsigned short port, const std::string &conf_file) {
+    FILE *fp = fopen(conf_file.c_str(), "r");
+    if (NULL == fp) {
+        return -1;
+    }
+    std::string req_body;
+    char buf[1024] = { 0 };
+    while (fgets(buf, sizeof(buf), fp) != NULL) {
+        req_body += buf;
+    }
+    fclose(fp);
+
+    RPC_DEBUG("req_body");
+
+    std::string req_head;
+    req_head += "POST /register HTTP/1.1\r\n";
+    req_head += "Host: " + ip + "\r\n";
+    req_head += "Content-Length: ";
+    sprintf(buf, "%lu", req_body.size());
+    req_head += buf;
+    req_head += "\r\n\r\n";
+
+    std::vector<std::string> ips_list;
+    ips_list.push_back(ip);
+
+    std::string rsp_head, rsp_body;
+    int ret = http_talk(ips_list, port, 
+            req_head, req_body, 
+            rsp_head, rsp_body,
+            DIR_SVR_CONN_TIMEOUT, 
+            DIR_SVR_SEND_TIMEOUT, 
+            DIR_SVR_RECV_TIMEOUT);
+    if (0 > ret) {
+        RPC_WARNING("http_talk() failed");
+        return -1;
+    }
+    m_conf = req_body;
+    return 0;
+}
+
+/**
+ * @brief unregister to directory server
+ *
+ * @param ip
+ * @param port
+ *
+ * @return 
+ */
+int svr_base::unregister_service(const std::string &ip, 
+        unsigned short port) {
+    if (m_conf.length() == 0) {
+        return 0;
+    }
+
+    char buf[32] = { 0 };
+
+    std::string req_head;
+    std::string req_body = m_conf;
+    req_head += "POST /unregister HTTP/1.1\r\n";
+    req_head += "Host: " + ip + "\r\n";
+    req_head += "Content-Length: ";
+    sprintf(buf, "%lu", req_body.size());
+    req_head += buf;
+    req_head += "\r\n\r\n";
+
+    std::vector<std::string> ips_list;
+    ips_list.push_back(ip);
+
+    std::string rsp_head, rsp_body;
+    int ret = http_talk(ips_list, port, 
+            req_head, req_body, 
+            rsp_head, rsp_body,
+            DIR_SVR_CONN_TIMEOUT, 
+            DIR_SVR_SEND_TIMEOUT, 
+            DIR_SVR_RECV_TIMEOUT);
+    if (0 > ret) {
+        RPC_WARNING("http_talk() failed");
+        return -1;
+    }
+    return 0;
 }
 
 /**
@@ -205,15 +299,20 @@ void svr_base::run_routine(int timeout_ms){
     }
 
     /* check for timeout */
-    iter = m_evts.begin();
-    while (iter != m_evts.end()) {
-        io_event *evt = *iter;
-        if (evt->is_timeout()) {
-            iter = m_evts.erase(iter);
-            evt->on_timeout();
-            evt->release();
-        } else {
-            ++iter;
+    unsigned long long cur_msec = get_cur_msec();
+    if (cur_msec - m_last_check_msec >= 1000) {
+        m_last_check_msec = cur_msec;
+
+        iter = m_evts.begin();
+        while (iter != m_evts.end()) {
+            io_event *evt = *iter;
+            if (evt->is_timeout()) {
+                iter = m_evts.erase(iter);
+                evt->on_timeout();
+                evt->release();
+            } else {
+                ++iter;
+            }
         }
-    }
+    } 
 }

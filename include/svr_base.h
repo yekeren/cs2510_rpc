@@ -57,6 +57,29 @@ class svr_base {
          */
         void run_routine(int timeout_ms = 10);
 
+        /**
+         * @brief register to directory server
+         *
+         * @param ip
+         * @param port
+         * @param conf_file
+         *
+         * @return 
+         */
+        int register_service(const std::string &ip, 
+                unsigned short port, const std::string &conf_file);
+
+        /**
+         * @brief unregister to directory server
+         *
+         * @param ip
+         * @param port
+         *
+         * @return 
+         */
+        int unregister_service(const std::string &ip, 
+                unsigned short port);
+
     public:
         /**
          * @brief create event
@@ -91,6 +114,11 @@ class svr_base {
         std::list<io_event*> m_evts_appd;
 
         spin_lock m_lock;
+
+        /* timeout checking msec */
+        unsigned long long m_last_check_msec;
+
+        std::string m_conf;
 };
 
 #endif
