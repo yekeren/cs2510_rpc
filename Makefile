@@ -15,12 +15,9 @@ ccend=\033[0m
 
 all: $(SVR_DS) $(CLI_LIB)
 #all: $(CLI_LIB)
-<<<<<<< Updated upstream
 all: $(SVR_DS) $(SVR_CS)
-=======
 #all: $(SVR_DS) 
 #$(SVR_CS)
->>>>>>> Stashed changes
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
