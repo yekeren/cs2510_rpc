@@ -1,7 +1,10 @@
 #include "cs_svr.h"
 #include <string.h>
+#include "common_def.h"
 #include "rpc_net.h"
 #include "rpc_log.h"
+#include "template.h"
+#include "ezxml.h"
 
 cs_event::cs_event(svr_base *svr): 
     http_event(svr) {
@@ -17,16 +20,9 @@ void cs_event::on_process() {
             get_method().c_str(), get_uri().c_str(), get_version().c_str());
 
     std::string rsp_head, rsp_body;
-    this->dsptch_http_request(get_uri(), req_body, rsp_body);
+    this->dsptch_http_request(get_uri(), req_body, rsp_head, rsp_body);
 
-    rsp_head += "HTTP/1.1 200 OK\r\n";
-    rsp_head += "Content-Type: text/xml\r\n";
-    rsp_head += "Content-Length: ";
-    char buf[32] = { 0 };
-    sprintf(buf, "%lu", rsp_body.size());
-    rsp_head += buf;
-    rsp_head += "\r\n\r\n";
-
+    /* set response */
     this->set_response(rsp_head + rsp_body);
 
     this->set_state("write");
@@ -35,7 +31,7 @@ void cs_event::on_process() {
 }
 
 void cs_event::process_default(const std::string &uri,
-        const std::string &req_body, std::string &rsp_body) {
+        const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
     RPC_WARNING("invalid request from client, uri=%s, ip=%s, port=%u", 
             uri.c_str(), get_ip().c_str(), get_port());
@@ -43,16 +39,24 @@ void cs_event::process_default(const std::string &uri,
     ezxml_t root = ezxml_new("message");
     ezxml_set_txt(root, "invalid request");
     rsp_body = ezxml_toxml(root);
-
     ezxml_free(root);
+
+    rsp_head = gen_http_head("404 Not Found", rsp_body.size());
 }
 
 void cs_event::dsptch_http_request(const std::string &uri, 
-        const std::string &req_body, std::string &rsp_body) {
+        const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
     if (uri.find("/add") == 0) {
-        process_add(uri, req_body, rsp_body, true);
+        process_add(req_body, rsp_head, rsp_body);
+    } else {
+        process_default(uri, req_body, rsp_head, rsp_body);
     }
+}
+
+void cs_event::process_add(const std::string &req_body, 
+        std::string &rsp_head, std::string &rsp_body) {
+    RPC_DEBUG("add");
 }
 
 cs_svr::cs_svr() {

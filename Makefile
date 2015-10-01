@@ -15,8 +15,7 @@ ccend=\033[0m
 
 #all: $(SVR_DS) $(CLI_LIB)
 #all: $(CLI_LIB)
-all: $(SVR_DS) 
-#$(SVR_CS)
+all: $(SVR_DS) $(SVR_CS)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
@@ -89,4 +88,5 @@ ezxml.o: src/ezxml.c
 clean:
 	rm -f *.o
 	rm -f $(SVR_DS)
+	rm -f $(SVR_CS)
 	rm -f $(CLI_LIB)

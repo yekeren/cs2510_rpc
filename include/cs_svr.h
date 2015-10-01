@@ -12,7 +12,13 @@ class cs_event: public http_event {
         virtual void on_process();
 
         void dsptch_http_request(const std::string &uri, 
-                const std::string &req_body, std::string &rsp_body);
+                const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
+
+        void process_default(const std::string &uri,
+                const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
+
+        void process_add(const std::string &req_body, 
+                std::string &rsp_head, std::string &rsp_body);
 };
 
 class cs_svr: public svr_base {
