@@ -13,26 +13,39 @@ INCLUDE='./include'
 cchighlight=\033[0;31m
 ccend=\033[0m
 
-#all: $(SVR_DS) $(CLI_LIB)
+all: $(SVR_DS) $(CLI_LIB)
 #all: $(CLI_LIB)
+<<<<<<< Updated upstream
 all: $(SVR_DS) $(SVR_CS)
+=======
+#all: $(SVR_DS) 
+#$(SVR_CS)
+>>>>>>> Stashed changes
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
-$(CLI_LIB): main_cli.o add_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o
+$(CLI_LIB): main_cli.o add_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o add_proto.o basic_proto.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) \
 		main_cli.o \
 		add_stub_cli.o \
 		ds_svc.o \
 		rpc_net.o \
 		rpc_http.o \
-		ezxml.o 
+		ezxml.o \
+		add_proto.o \
+		basic_proto.o
 
 main_cli.o: main_cli.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
 
 add_stub_cli.o: src/add_stub_cli.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_stub_cli.cpp
+
+add_proto.o: src/add_proto.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_proto.cpp
+
+basic_proto.o: src/basic_proto.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/basic_proto.cpp
 
 ds_svc.o: src/ds_svc.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svc.cpp
