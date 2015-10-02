@@ -5,6 +5,7 @@
 #include "rpc_log.h"
 #include "template.h"
 #include "ezxml.h"
+#include "add_proto.h"
 
 cs_event::cs_event(svr_base *svr): 
     http_event(svr) {
@@ -56,7 +57,18 @@ void cs_event::dsptch_http_request(const std::string &uri,
 
 void cs_event::process_add(const std::string &req_body, 
         std::string &rsp_head, std::string &rsp_body) {
-    RPC_DEBUG("add");
+    add_proto ap;
+    ap.decode(req_body.data(), req_body.size());
+
+    int a = ap.get_a();
+    int b = ap.get_b();
+    ap.set_retval(a + b);
+
+    const char *buf = ap.encode();
+    int buf_len = ap.get_buf_len();
+
+    rsp_head = gen_http_head("200 OK", buf_len);
+    rsp_body.assign(buf, buf_len);
 }
 
 cs_svr::cs_svr() {

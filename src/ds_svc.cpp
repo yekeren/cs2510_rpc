@@ -105,7 +105,7 @@ int ds_svc::get_insts_by_name(const std::string &name,
     std::string req_head, req_body;
     std::string rsp_head, rsp_body;
 
-    req_head += std::string("GET /server-config.xml?name=") + name + " HTTP/1.1\r\n";
+    req_head += std::string("GET /get_insts_by_name?name=") + name + " HTTP/1.1\r\n";
     req_head += "Host: " DIR_SVR_HOST "\r\n";
     req_head += "\r\n\r\n";
 

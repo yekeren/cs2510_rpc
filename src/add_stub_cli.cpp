@@ -1,6 +1,7 @@
 #include "add_stub_cli.h"
 #include <assert.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include "ds_svc.h"
 #include "rpc_log.h"
 #include "add_proto.h"
@@ -12,7 +13,7 @@ int add(int a, int b) {
 
     /* get svr insts from directory service */
     std::vector<svr_inst_t> svr_insts_list;
-    int ret = ds_inst->get_insts_by_name("kexin", svr_insts_list);
+    int ret = ds_inst->get_insts_by_name("comp_svr", svr_insts_list);
     assert(0 == ret);
 
     for (int i = 0; i < (int)svr_insts_list.size(); ++i) {
@@ -40,8 +41,12 @@ int add(int a, int b) {
 
 
     std::string req_head;
-    req_head += std::string("GET /server-config.xml?name=") + svr_inst.name.c_str() + " HTTP/1.1\r\n";
-    req_head += "Host: " DIR_SVR_HOST "\r\n";
+    char tbuf[32] = { 0 };
+    req_head += "POST /add HTTP/1.1\r\n";
+    req_head += "Host: " + svr_inst.ip + "\r\n";
+    req_head += "Content-Length: ";
+    sprintf(tbuf, "%d", buf_len);
+    req_head += tbuf;
     req_head += "\r\n\r\n";
 
     std::string req_body(buf, buf_len);

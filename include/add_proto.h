@@ -18,6 +18,10 @@ class add_proto : public basic_proto {
             m_b = b;
         }
 
+        void set_retval(int retval) {
+            m_retval = retval;
+        }
+
         int get_a() {
             return m_a;
         }

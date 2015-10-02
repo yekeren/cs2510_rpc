@@ -51,8 +51,8 @@ ds_svc.o: src/ds_svc.cpp
 $(SVR_DS): main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o template.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_DS) main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o template.o
 
-$(SVR_CS): main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o
+$(SVR_CS): main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o add_proto.o basic_proto.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o add_proto.o basic_proto.o
 
 main_svr_cs.o: main_svr_cs.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_svr_cs.cpp
