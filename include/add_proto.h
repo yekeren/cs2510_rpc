@@ -1,13 +1,7 @@
 #ifndef __ADD_PROTO__
 #define __ADD_PROTO__
 
-    public:
-        set_A(int *A) {
-            m_A = A;
-        }
-
-        set_m(int m) {
-            m_m = m;
+#include "basic_proto.h"
 
 class add_proto : public basic_proto {
     public:
