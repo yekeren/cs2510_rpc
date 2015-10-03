@@ -5,9 +5,14 @@
 
 class add_proto : public basic_proto {
     public:
-        add_proto();
+        add_proto(){
+            m_encoded_len = 0;
+            m_buf.resize(16);
+        }
 
-        virtual ~add_proto();
+        virtual ~add_proto(){
+        
+        }
 
     public:
         void set_a(int a) {
@@ -16,10 +21,6 @@ class add_proto : public basic_proto {
 
         void set_b(int b) {
             m_b = b;
-        }
-
-        void set_retval(int retval) {
-            m_retval = retval;
         }
 
         int get_a() {
