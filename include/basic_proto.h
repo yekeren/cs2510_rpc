@@ -19,7 +19,9 @@ class basic_proto{
     public:
         void add_int(int x);
         int read_int (const char* buf, int offset);
-        void add_binary(char* bin, int bin_len);
+        char* read_binary(const char *buf, int offset);
+        void add_binary(const char* bin, int bin_len);
+    
     
     protected:
         int m_encoded_len;

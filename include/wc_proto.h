@@ -1,38 +1,35 @@
-#ifndef __ADD_PROTO__
-#define __ADD_PROTO__
+#ifndef __WC_PROTO__
+#define __WC_PROTO__
 
 #include "basic_proto.h"
 
-class add_proto : public basic_proto {
+class wc_proto : public basic_proto {
     public:
-        add_proto(){
+        wc_proto(){
             m_encoded_len = 0;
             m_buf.resize(16);
         }
 
-        virtual ~add_proto(){
+        virtual ~wc_proto(){
         
         }
 
     public:
-        void set_a(int a) {
-            m_a = a;
-        }
-
-        void set_b(int b) {
-            m_b = b;
+        void set_s(std::string a) {
+            m_str = a;
+            m_str_len = a.length();
         }
     
         void set_retval(int val){
             m_retval = val;
         }
-
-        int get_a() {
-            return m_a;
+    
+        int get_str_len(){
+            return m_str_len;
         }
-
-        int get_b() {
-            return m_b;
+    
+        std::string get_str(){
+            return m_str;
         }
     
         int get_retval(){
@@ -46,8 +43,8 @@ class add_proto : public basic_proto {
     public:
         const char *encode(){
             m_encoded_len = 0;
-            basic_proto::add_int(m_a);
-            basic_proto::add_int(m_b);
+            basic_proto::add_int(m_str_len);
+            basic_proto::add_binary(m_str.c_str(), m_str_len);
             basic_proto::add_int(m_retval);
             return m_buf.data();
         }
@@ -55,13 +52,13 @@ class add_proto : public basic_proto {
         void decode(const char *buf, int buf_len){
             int ptr = 0;
             if(ptr<buf_len){
-                m_a = basic_proto::read_int(buf, ptr);
+                m_str_len = basic_proto::read_int(buf, ptr);
             }
             ptr+=sizeof(int);
             if(ptr<buf_len){
-                m_b = basic_proto::read_int(buf, ptr);
+                m_str = basic_proto::read_binary(buf, ptr);
             }
-            ptr+=sizeof(int);
+            ptr+=sizeof(char)*m_str_len;
             if(ptr<buf_len){
                 m_retval = basic_proto::read_int(buf, ptr);
             }
@@ -70,8 +67,8 @@ class add_proto : public basic_proto {
         }
 
     private:
-        int m_a;
-        int m_b;
+        std::string m_str;
+        int m_str_len;
         int m_retval;
 
         //std::string m_buf;

@@ -21,7 +21,11 @@ int basic_proto::read_int(const char* buf, int offset){
     return *(int*) (buf+offset);
 }
 
-void basic_proto::add_binary(char * bin, int bin_len){
+char* basic_proto::read_binary(const char *buf, int offset){
+    return (char*)(buf+offset);
+}
+
+void basic_proto::add_binary(const char * bin, int bin_len){
     while (m_encoded_len + bin_len >m_buf.size()){
         m_buf.resize(m_buf.size()*2);
     }

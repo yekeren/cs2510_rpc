@@ -19,6 +19,9 @@ class cs_event: public http_event {
 
         void process_add(const std::string &req_body, 
                 std::string &rsp_head, std::string &rsp_body);
+    
+        void process_wc(const std::string &req_body,
+                std::string &rsp_head, std::string &rsp_body);
 };
 
 class cs_svr: public svr_base {

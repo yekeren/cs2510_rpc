@@ -6,6 +6,7 @@
 #include "template.h"
 #include "ezxml.h"
 #include "add_proto.h"
+#include "wc_proto.h"
 
 cs_event::cs_event(svr_base *svr): 
     http_event(svr) {
@@ -50,7 +51,11 @@ void cs_event::dsptch_http_request(const std::string &uri,
 
     if (uri.find("/add") == 0) {
         process_add(req_body, rsp_head, rsp_body);
-    } else {
+    }
+    else if (uri.find("/wc")==0){
+        process_wc(req_body, rsp_head, rsp_body);
+    }
+    else {
         process_default(uri, req_body, rsp_head, rsp_body);
     }
 }
@@ -69,6 +74,23 @@ void cs_event::process_add(const std::string &req_body,
 
     rsp_head = gen_http_head("200 OK", buf_len);
     rsp_body.assign(buf, buf_len);
+}
+
+void cs_event::process_wc(const std::string &req_body,
+        std::string &rsp_head, std::string & rsp_body){
+    wc_proto ap;
+    ap.decode(req_body.data(), req_body.size());
+    
+    int m_str_len = ap.get_str_len();
+    std::string str = ap.get_str();
+    ap.set_retval(5);
+    
+    const char *buf = ap.encode();
+    int buf_len = ap.get_buf_len();
+    
+    rsp_head = gen_http_head("wc OK", buf_len);
+    rsp_body.assign(buf, buf_len);
+    
 }
 
 cs_svr::cs_svr() {

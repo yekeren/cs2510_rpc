@@ -21,16 +21,17 @@ all: $(SVR_DS) $(SVR_CS)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
-$(CLI_LIB): main_cli.o add_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o add_proto.o basic_proto.o
+$(CLI_LIB): main_cli.o add_stub_cli.o wc_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o basic_proto.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) \
 		main_cli.o \
 		add_stub_cli.o \
+		wc_stub_cli.o \
 		ds_svc.o \
 		rpc_net.o \
 		rpc_http.o \
 		ezxml.o \
-		add_proto.o \
-		basic_proto.o
+		basic_proto.o \
+#		add_proto.o
 
 main_cli.o: main_cli.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
@@ -38,8 +39,11 @@ main_cli.o: main_cli.cpp
 add_stub_cli.o: src/add_stub_cli.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_stub_cli.cpp
 
-add_proto.o: src/add_proto.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_proto.cpp
+wc_stub_cli.o: src/wc_stub_cli.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/wc_stub_cli.cpp
+
+#add_proto.o: src/add_proto.cpp
+#	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_proto.cpp
 
 basic_proto.o: src/basic_proto.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/basic_proto.cpp
@@ -51,8 +55,8 @@ ds_svc.o: src/ds_svc.cpp
 $(SVR_DS): main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o template.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_DS) main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o template.o
 
-$(SVR_CS): main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o add_proto.o basic_proto.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o add_proto.o basic_proto.o
+$(SVR_CS): main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o basic_proto.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o basic_proto.o
 
 main_svr_cs.o: main_svr_cs.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_svr_cs.cpp
