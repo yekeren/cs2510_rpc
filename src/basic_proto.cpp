@@ -6,6 +6,11 @@ basic_proto::basic_proto() {
     m_buf.resize(16);
 }
 
+basic_proto:basic_proto(const char* buf, int buf_len){
+    m_buf.assign(buf,buf_len);
+    m_encoded_len = 0 ;
+}
+
 basic_proto::~basic_proto() {
 }
 
@@ -82,3 +87,22 @@ int basic_proto::read_matrix(int **&data, int &row, int &col) {
     }
     return 0;
 }
+
+void basic_proto::add_string(int m_str_len, const char* str, int m_retval){
+    m_encoded_len = 0;
+    add_int(m_str_len);
+    add_binary(str, m_str_len);
+    add_int(m_retval);
+}
+
+void basic_proto::read_string(int &m_str_len, char* &bin, int & m_retval){
+    m_encoded_len = 0;
+    read_int(m_str_len);
+    read_binary(m_str_len, bin);
+    read_int(m_retval);
+}
+
+
+
+
+
