@@ -102,6 +102,14 @@ void basic_proto::read_string(int &m_str_len, char* &bin, int & m_retval){
     read_int(m_retval);
 }
 
+int basic_proto::get_buf_len(){
+    return m_encoded_len;
+}
+
+const char* basic_proto::get_buf(){
+    return m_buf.data();
+}
+
 
 
 
