@@ -14,6 +14,7 @@
 class basic_proto{
     public:
         basic_proto();
+        basic_proto(const char* buf, int buf_len);
         virtual ~basic_proto();
     
     public:
@@ -28,6 +29,12 @@ class basic_proto{
 
         void add_array(int *data, int size);
         void read_array(int *&data, int &size);
+    
+        void add_string(int m_str_len, const char* str, int m_retval);
+        void read_string(int &m_str_len, char* &bin, int & m_retval);
+    
+        int get_buf_len();
+        const char* get_buf();
     
     protected:
         int m_encoded_len;
