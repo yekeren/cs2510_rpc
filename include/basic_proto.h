@@ -18,8 +18,8 @@ class basic_proto{
     
     public:
         void add_int(int x);
-        int read_int (const char* buf, int offset);
-        char* read_binary(const char *buf, int offset);
+        int read_int (const char* buf, int & retval);
+        int read_binary(const char *buf, int buf_len, char* &data);
         void add_binary(const char* bin, int bin_len);
     
     
