@@ -25,6 +25,9 @@ class basic_proto{
 
         void add_matrix(int **data, int row, int col);
         int read_matrix(int **&data, int &row, int &col);
+
+        void add_array(int *data, int size);
+        void read_array(int *&data, int &size);
     
     protected:
         int m_encoded_len;

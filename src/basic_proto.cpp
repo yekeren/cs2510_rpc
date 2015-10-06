@@ -44,6 +44,21 @@ void basic_proto::add_binary(const char * bin, int bin_len){
     m_encoded_len +=bin_len;
 }
 
+void basic_proto::add_array(int *data, int size) {
+    add_int(size);
+    add_binary(data, sizeof(int) * size);
+}
+
+void basic_proto::read_array(int *&data, int &size) {
+    if (read_int(size) < 0) {
+        return -1;
+    }
+    if (read_binary(size * sizeof(int)), data) {
+        return -1;
+    }
+    return 0;
+}
+
 void basic_proto::add_matrix(int **data, int row, int col) {
     add_int(row);
     add_int(col);
