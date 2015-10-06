@@ -19,9 +19,12 @@ class basic_proto{
     public:
         void add_int(int retval);
         int read_int (int & retval);
-        int read_binary(int bin_len, char* &bin);
+
         void add_binary(const char* bin, int bin_len);
-    
+        int read_binary(int bin_len, char* &bin);
+
+        void add_matrix(int **data, int row, int col);
+        int read_matrix(int **&data, int &row, int &col);
     
     protected:
         int m_encoded_len;
