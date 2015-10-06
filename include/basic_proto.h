@@ -17,9 +17,9 @@ class basic_proto{
         virtual ~basic_proto();
     
     public:
-        void add_int(int x);
-        int read_int (const char* buf, int & retval);
-        int read_binary(const char *buf, int buf_len, char* &data);
+        void add_int(int retval);
+        int read_int (int & retval);
+        int read_binary(int bin_len, char* &bin);
         void add_binary(const char* bin, int bin_len);
     
     
