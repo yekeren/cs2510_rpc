@@ -18,7 +18,7 @@ class basic_proto{
     
     public:
         void add_int(int retval);
-        int read_int (int & retval);
+        int read_int (int &retval);
 
         void add_binary(const char* bin, int bin_len);
         int read_binary(int bin_len, char* &bin);
