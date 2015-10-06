@@ -32,5 +32,3 @@ void basic_proto::add_binary(const char * bin, int bin_len){
     memcpy((char*)m_buf.data() + m_encoded_len, bin, bin_len);
     m_encoded_len +=bin_len;
 }
-
-
