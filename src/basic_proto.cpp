@@ -1,4 +1,5 @@
 #include "basic_proto.h"
+#include <stdlib.h>
 #include <string.h>
 
 basic_proto::basic_proto() {
@@ -23,12 +24,12 @@ void basic_proto::add_int(int retval){
 }
 
 int basic_proto::read_int(int &retval){
-    if ((m_encoded_len + sizeof(*retval)) > m_buf.size()){
+    if ((m_encoded_len + sizeof(int)) > m_buf.size()){
         return -1;
     }
-    retval = (int*)((char *)m_buf.data() + m_encoded_len);
-    m_encoded_len += sizeof(*retval);
-    return 1;
+    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
+    m_encoded_len += sizeof(int);
+    return 0;
 }
 
 int basic_proto::read_binary(int bin_len, char* &bin){
@@ -38,7 +39,7 @@ int basic_proto::read_binary(int bin_len, char* &bin){
     m_buf.assign(bin, m_encoded_len, bin_len);
     
     m_encoded_len += bin_len;
-    return 1;
+    return 0;
 }
 
 void basic_proto::add_binary(const char * bin, int bin_len){
@@ -51,14 +52,14 @@ void basic_proto::add_binary(const char * bin, int bin_len){
 
 void basic_proto::add_array(int *data, int size) {
     add_int(size);
-    add_binary(data, sizeof(int) * size);
+    add_binary((const char*)data, sizeof(int) * size);
 }
 
 int basic_proto::read_array(int *&data, int &size) {
     if (read_int(size) < 0) {
         return -1;
     }
-    if (read_binary(size * sizeof(int)), data) {
+    if (read_binary(size * sizeof(int), data)) {
         return -1;
     }
     return 0;
@@ -68,7 +69,7 @@ void basic_proto::add_matrix(int **data, int row, int col) {
     add_int(row);
     add_int(col);
     for (int i = 0; i < row; ++i) {
-        add_binary(data[i], sizeof(int) * col);
+        add_binary((const char*)data[i], sizeof(int) * col);
     }
 }
 
@@ -79,7 +80,7 @@ int basic_proto::read_matrix(int **&data, int &row, int &col) {
     if (read_int(col) < 0) {
         return -1;
     }
-    data = (int*)malloc(sizeof(int*) * row);
+    data = (int**)malloc(sizeof(int*) * row);
     for (int i = 0; i < row; ++i) {
         if (read_binary(sizeof(int) * col, data[i]) < 0) {
             return -1;
