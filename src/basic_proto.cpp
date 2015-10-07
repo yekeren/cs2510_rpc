@@ -59,9 +59,11 @@ int basic_proto::read_array(int *&data, int &size) {
     if (read_int(size) < 0) {
         return -1;
     }
-    if (read_binary(size * sizeof(int), data)) {
+    char *ptr = NULL;
+    if (read_binary(size * sizeof(int), ptr)) {
         return -1;
     }
+    data = (int*)ptr;
     return 0;
 }
 
@@ -82,9 +84,11 @@ int basic_proto::read_matrix(int **&data, int &row, int &col) {
     }
     data = (int**)malloc(sizeof(int*) * row);
     for (int i = 0; i < row; ++i) {
-        if (read_binary(sizeof(int) * col, data[i]) < 0) {
+        char *ptr = NULL;
+        if (read_binary(sizeof(int) * col, ptr) < 0) {
             return -1;
         }
+        data[i] = (int*)ptr;
     }
     return 0;
 }
