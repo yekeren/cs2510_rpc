@@ -36,7 +36,7 @@ int basic_proto::read_binary(int bin_len, char* &bin){
     if((m_encoded_len + bin_len) > m_buf.size()){
         return -1;
     }
-    m_buf.assign(bin, m_encoded_len, bin_len);
+    bin = m_buf.data() + m_encoded_len;
     
     m_encoded_len += bin_len;
     return 0;
@@ -117,8 +117,5 @@ int basic_proto::get_buf_len(){
 const char* basic_proto::get_buf(){
     return m_buf.data();
 }
-
-
-
 
 
