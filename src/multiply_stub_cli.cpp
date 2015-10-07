@@ -1,4 +1,4 @@
-#include "wc_stub_cli.h"
+#include "multiply_stub_cli.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -7,8 +7,10 @@
 #include "rpc_http.h"
 #include "basic_proto.h"
 
+void multiply(int **A, int A_row, int A_col,
+        int **B, int B_row, int B_col,
+        int **C, int C_row, int C_col) {
 
-int wc(std::string str) {
     ds_svc *ds_inst = ds_svc::instance();
 
     /* get svr insts from directory service */
@@ -30,25 +32,21 @@ int wc(std::string str) {
             svr_inst.name.c_str(), svr_inst.version.c_str(), svr_inst.id.c_str(), 
             svr_inst.ip.c_str(), svr_inst.port);
 
-    /* data marshalling */
-    //return 0;
     basic_proto ap;
-    ap.add_string(str.size(), str.data());
-
-    const char *buf = ap.get_buf();
-    int buf_len = ap.get_buf_len();
-
+    ap.add_matrix(A, A_row, A_col);
+    ap.add_matrix(B, B_row, B_col);
+    ap.add_matrix(C, C_row, C_col);
 
     std::string req_head;
     char tbuf[32] = { 0 };
-    req_head += "POST /wc HTTP/1.1\r\n";
+    req_head += "POST /multiply HTTP/1.1\r\n";
     req_head += "Host: " + svr_inst.ip + "\r\n";
     req_head += "Content-Length: ";
-    sprintf(tbuf, "%d", buf_len);
+    sprintf(tbuf, "%d", ap.get_buf_len());
     req_head += tbuf;
     req_head += "\r\n\r\n";
 
-    std::string req_body(buf, buf_len);
+    std::string req_body(ap.get_buf(), ap.get_buf_len());
 
     /* request for computing */
     std::string rsp_head, rsp_body;
@@ -64,11 +62,7 @@ int wc(std::string str) {
     
     /* data unmarshalling */
     basic_proto ap_rsp(rsp_body.data(), rsp_body.size());
-    int str_len, retval;
-    char * back_str;
-    ap_rsp.read_string(str_len, back_str);
-    ap_rsp.read_int(retval);
-    return retval;
+    return;
 
     //return retval;
 }
