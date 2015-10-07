@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "ds_svc.h"
 #include "rpc_log.h"
-#include "wc_proto.h"
 #include "rpc_http.h"
 
 
