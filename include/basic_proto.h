@@ -28,10 +28,10 @@ class basic_proto{
         int read_matrix(int **&data, int &row, int &col);
 
         void add_array(int *data, int size);
-        void read_array(int *&data, int &size);
+        int read_array(int *&data, int &size);
     
         void add_string(int m_str_len, const char* str, int m_retval);
-        void read_string(int &m_str_len, char* &bin, int & m_retval);
+        int read_string(int &m_str_len, char* &bin, int & m_retval);
     
         int get_buf_len();
         const char* get_buf();
