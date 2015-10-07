@@ -54,7 +54,7 @@ void basic_proto::add_array(int *data, int size) {
     add_binary(data, sizeof(int) * size);
 }
 
-void basic_proto::read_array(int *&data, int &size) {
+int basic_proto::read_array(int *&data, int &size) {
     if (read_int(size) < 0) {
         return -1;
     }
@@ -89,17 +89,24 @@ int basic_proto::read_matrix(int **&data, int &row, int &col) {
 }
 
 void basic_proto::add_string(int m_str_len, const char* str, int m_retval){
-    m_encoded_len = 0;
+    //m_encoded_len = 0;
     add_int(m_str_len);
     add_binary(str, m_str_len);
     add_int(m_retval);
 }
 
-void basic_proto::read_string(int &m_str_len, char* &bin, int & m_retval){
-    m_encoded_len = 0;
-    read_int(m_str_len);
-    read_binary(m_str_len, bin);
-    read_int(m_retval);
+int basic_proto::read_string(int &m_str_len, char* &bin, int & m_retval){
+    //m_encoded_len = 0;
+    if(read_int(m_str_len) < 0){
+        return -1;
+    }
+    if(read_binary(m_str_len, bin) <0){
+        return -1;
+    }
+    if(read_int(m_retval) < 0){
+        return -1;
+    }
+    return 0;
 }
 
 int basic_proto::get_buf_len(){
