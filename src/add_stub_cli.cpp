@@ -5,6 +5,7 @@
 #include "ds_svc.h"
 #include "rpc_log.h"
 #include "rpc_http.h"
+#include "basic_proto.h"
 
 
 int add(int a, int b) {
@@ -70,7 +71,7 @@ int add(int a, int b) {
 
     a = ap_rsp.read_int();
     b = ap_rsp.read_int();
-    int retval = ap_rsp.read_int();
+    retval = ap_rsp.read_int();
     return retval;
 
     //return retval;
