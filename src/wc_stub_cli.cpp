@@ -32,10 +32,11 @@ int wc(std::string str) {
 
     /* data marshalling */
     //return 0;
-    wc_proto ap;
-    ap.set_s(str);
+    basic_proto ap;
+    int retval;
+    ap.add_string(str.size(), str.data(), retval);
 
-    const char *buf = ap.encode();
+    const char *buf = ap.get_buf();
     int buf_len = ap.get_buf_len();
 
 
@@ -63,11 +64,10 @@ int wc(std::string str) {
     http_talk(ips_list, svr_inst.port, req_head, req_body, rsp_head, rsp_body, conn_timeout_ms, send_timeout_ms, recv_timeout_ms);
     
     /* data unmarshalling */
-    wc_proto ap_rsp;
-    
-    ap_rsp.decode(rsp_body.data(), rsp_body.size());
-
-    int retval = ap_rsp.get_retval();
+    basic_proto ap_rsp(rsp_body.data(), rsp_body.size());
+    int str_len;
+    char * back_str;
+    ap_rsp.read_string(str_len, back_str, retval);
     return retval;
 
     //return retval;
