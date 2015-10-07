@@ -50,20 +50,11 @@ class wc_proto : public basic_proto {
         }
 
         void decode(const char *buf, int buf_len){
-            int ptr = 0;
-            if(ptr<buf_len){
-                m_str_len = basic_proto::read_int(buf, ptr);
-            }
-            ptr+=sizeof(int);
-            if(ptr<buf_len){
-                m_str = basic_proto::read_binary(buf, ptr);
-            }
-            ptr+=sizeof(char)*m_str_len;
-            if(ptr<buf_len){
-                m_retval = basic_proto::read_int(buf, ptr);
-            }
-            ptr+=sizeof(int);
-            
+            m_encoded_len = 0;
+            //if -1?
+            basic_proto::read_int(m_str_len);
+            basic_proto::read_binary(m_str_len, m_str.c_str());
+            basic_proto::read_int(m_retval);
         }
 
     private:
