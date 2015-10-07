@@ -6,7 +6,7 @@ basic_proto::basic_proto() {
     m_buf.resize(16);
 }
 
-basic_proto:basic_proto(const char* buf, int buf_len){
+basic_proto::basic_proto(const char* buf, int buf_len){
     m_buf.assign(buf,buf_len);
     m_encoded_len = 0 ;
 }
