@@ -36,8 +36,7 @@ int basic_proto::read_binary(int bin_len, char* &bin){
     if((m_encoded_len + bin_len) > m_buf.size()){
         return -1;
     }
-    bin = m_buf.data() + m_encoded_len;
-    
+    bin = (char*)m_buf.data() + m_encoded_len;
     m_encoded_len += bin_len;
     return 0;
 }
@@ -93,22 +92,18 @@ int basic_proto::read_matrix(int **&data, int &row, int &col) {
     return 0;
 }
 
-void basic_proto::add_string(int m_str_len, const char* str, int m_retval){
+void basic_proto::add_string(int str_len, const char* str){
     //m_encoded_len = 0;
-    add_int(m_str_len);
-    add_binary(str, m_str_len);
-    add_int(m_retval);
+    add_int(str_len);
+    add_binary(str, str_len);
 }
 
-int basic_proto::read_string(int &m_str_len, char* &bin, int & m_retval){
+int basic_proto::read_string(int &str_len, char* &bin){
     //m_encoded_len = 0;
-    if(read_int(m_str_len) < 0){
+    if(read_int(str_len) < 0){
         return -1;
     }
-    if(read_binary(m_str_len, bin) <0){
-        return -1;
-    }
-    if(read_int(m_retval) < 0){
+    if(read_binary(str_len, bin) <0){
         return -1;
     }
     return 0;

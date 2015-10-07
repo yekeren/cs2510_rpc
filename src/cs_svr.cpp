@@ -5,8 +5,52 @@
 #include "rpc_log.h"
 #include "template.h"
 #include "ezxml.h"
-#include "add_proto.h"
-#include "wc_proto.h"
+#include "basic_proto.h"
+
+void print_matrix(int **k, int row, int col) {
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < col; ++j) {
+            RPC_TERMINAL("%4d", k[i][j]);
+        }
+        RPC_TERMINAL("\n");
+    }
+}
+
+int add(int a, int b) {
+    RPC_TERMINAL("%d + %d = %d\n", a, b, a + b);
+    return a + b;
+}
+
+int wc(const std::string &str) {
+    RPC_TERMINAL("wc: %s\n", str.c_str());
+    return str.length();
+}
+
+int max(int size, int *data) {
+    int retval = 0;
+    for (int i = 0; i < size; ++i) {
+        if (data[i] > retval) {
+            retval = data[i];
+        }
+        RPC_TERMINAL("%4d", data[i]);
+    }
+    RPC_TERMINAL("max=%d", retval);
+    return retval;
+}
+
+void multiply(int **A, int A_row, int A_col,
+        int **B, int B_row, int B_col,
+        int **C, int C_row, int C_col) {
+
+    RPC_TERMINAL("matrix A:\n");
+    print_matrix(A, A_row, A_col);
+
+    RPC_TERMINAL("matrix B:\n");
+    print_matrix(B, B_row, B_col);
+
+    RPC_TERMINAL("matrix C:\n");
+    print_matrix(C, C_row, C_col);
+}
 
 cs_event::cs_event(svr_base *svr): 
     http_event(svr) {
@@ -52,6 +96,9 @@ void cs_event::dsptch_http_request(const std::string &uri,
     if (uri.find("/add") == 0) {
         process_add(req_body, rsp_head, rsp_body);
     }
+    else if (uri.find("/max")==0){
+        process_max(req_body, rsp_head, rsp_body);
+    }
     else if (uri.find("/wc")==0){
         process_wc(req_body, rsp_head, rsp_body);
     }
@@ -62,35 +109,88 @@ void cs_event::dsptch_http_request(const std::string &uri,
 
 void cs_event::process_add(const std::string &req_body, 
         std::string &rsp_head, std::string &rsp_body) {
-    add_proto ap;
-    ap.decode(req_body.data(), req_body.size());
 
-    int a = ap.get_a();
-    int b = ap.get_b();
-    ap.set_retval(a + b);
+    basic_proto bpin(req_body.data(), req_body.size());
+    basic_proto bpout;
 
-    const char *buf = ap.encode();
-    int buf_len = ap.get_buf_len();
+    int a, b, retval;
+    bpin.read_int(a);
+    bpin.read_int(b);
 
-    rsp_head = gen_http_head("200 OK", buf_len);
-    rsp_body.assign(buf, buf_len);
+    retval = add(a, b);
+
+    bpout.add_int(a);
+    bpout.add_int(b);
+    bpout.add_int(retval);
+
+    rsp_head = gen_http_head("200 OK", bpout.get_buf_len());
+    rsp_body.assign(bpout.get_buf(), bpout.get_buf_len());
+}
+    
+void cs_event::process_max(const std::string &req_body,
+        std::string &rsp_head, std::string &rsp_body) {
+
+    basic_proto bpin(req_body.data(), req_body.size());
+    basic_proto bpout;
+
+    int size, *data, retval;
+    bpin.read_array(data, size);
+
+    retval = max(size, data);
+
+    bpout.add_array(data, size);
+    bpout.add_int(retval);
+
+    rsp_head = gen_http_head("200 OK", bpout.get_buf_len());
+    rsp_body.assign(bpout.get_buf(), bpout.get_buf_len());
 }
 
 void cs_event::process_wc(const std::string &req_body,
         std::string &rsp_head, std::string & rsp_body){
-    wc_proto ap;
-    ap.decode(req_body.data(), req_body.size());
-    
-    int m_str_len = ap.get_str_len();
-    std::string str = ap.get_str();
-    ap.set_retval(5);
-    
-    const char *buf = ap.encode();
-    int buf_len = ap.get_buf_len();
-    
-    rsp_head = gen_http_head("wc OK", buf_len);
-    rsp_body.assign(buf, buf_len);
-    
+
+    basic_proto bpin(req_body.data(), req_body.size());
+    basic_proto bpout;
+
+    int str_len;
+    char *str;
+    bpin.read_string(str_len, str);
+
+    int retval = wc(std::string(str, str_len));
+
+    bpout.add_string(str_len, str);
+    bpout.add_int(retval);
+
+    rsp_head = gen_http_head("200 OK", bpout.get_buf_len());
+    rsp_body.assign(bpout.get_buf(), bpout.get_buf_len());
+}
+
+void cs_event::process_multiply(const std::string &req_body, 
+        std::string &rsp_head, std::string &rsp_body) {
+
+    basic_proto bpin(rsp_body.data(), rsp_body.size());
+    basic_proto bpout;
+
+    int **A = NULL, **B = NULL, **C = NULL;
+    int A_row, A_col;
+    int B_row, B_col;
+    int C_row, C_col;
+
+    bpin.read_matrix(A, A_row, A_col);
+    bpin.read_matrix(B, B_row, B_col);
+    bpin.read_matrix(C, C_row, C_col);
+
+    multiply(A, A_row, A_col, B, B_row, B_col, C, C_row, C_col);
+
+    bpout.add_matrix(A, A_row, A_col);
+    bpout.add_matrix(B, B_row, B_col);
+    bpout.add_matrix(C, C_row, C_col);
+
+    free(A);
+    free(B);
+    free(C);
+
+    rsp_head = gen_http_head("200 OK", bpout.get_buf_len());
+    rsp_body.assign(bpout.get_buf(), bpout.get_buf_len());
 }
 
 cs_svr::cs_svr() {

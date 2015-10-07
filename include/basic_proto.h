@@ -30,8 +30,8 @@ class basic_proto{
         void add_array(int *data, int size);
         int read_array(int *&data, int &size);
     
-        void add_string(int m_str_len, const char* str, int m_retval);
-        int read_string(int &m_str_len, char* &bin, int & m_retval);
+        void add_string(int str_len, const char* str);
+        int read_string(int &str_len, char* &bin);
     
         int get_buf_len();
         const char* get_buf();
