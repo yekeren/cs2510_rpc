@@ -69,9 +69,9 @@ int add(int a, int b) {
     /* data unmarshalling */
     basic_proto ap_rsp(rsp_body.data(), rsp_body.size());
 
-    a = ap_rsp.read_int();
-    b = ap_rsp.read_int();
-    retval = ap_rsp.read_int();
+    ap_rsp.read_int(a);
+    ap_rsp.read_int(b);
+    ap_rsp.read_int(retval);
     return retval;
 
     //return retval;
