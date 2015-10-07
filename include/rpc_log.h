@@ -29,5 +29,7 @@ static std::string get_time_str() {
     fprintf(stderr, "WARNING %s %s:%d %s() " format"\n", \
             get_time_str().c_str(), __FILE__, __LINE__, __func__, ##args)
 
+#define RPC_TERMINAL(format, args...) \
+    fprintf(stderr, format, ##args)
 
 #endif
