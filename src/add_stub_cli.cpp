@@ -32,11 +32,14 @@ int add(int a, int b) {
 
     /* data marshalling */
     //return 0;
-    add_proto ap;
-    ap.set_a(a);
-    ap.set_b(b);
-
-    const char *buf = ap.encode();
+    basic_proto ap;
+    
+    int retval;
+    ap.add_int(a);
+    ap.add_int(b);
+    ap.add_int(retval);
+    
+    const char *buf = ap.get_buf();
     int buf_len = ap.get_buf_len();
 
 
@@ -64,13 +67,11 @@ int add(int a, int b) {
     http_talk(ips_list, svr_inst.port, req_head, req_body, rsp_head, rsp_body, conn_timeout_ms, send_timeout_ms, recv_timeout_ms);
     
     /* data unmarshalling */
-    add_proto ap_rsp;
-    
-    ap_rsp.decode(rsp_body.data(), rsp_body.size());
+    basic_proto ap_rsp(rsp_body.data(), rsp_body.size());
 
-    a = ap_rsp.get_a();
-    b = ap_rsp.get_b();
-    int retval = ap_rsp.get_retval();
+    a = ap_rsp.read_int();
+    b = ap_rsp.read_int();
+    int retval = ap_rsp.read_int();
     return retval;
 
     //return retval;
