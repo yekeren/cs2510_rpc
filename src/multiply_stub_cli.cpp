@@ -6,63 +6,47 @@
 #include "rpc_log.h"
 #include "rpc_http.h"
 #include "basic_proto.h"
+#include "template.h"
 
-void multiply(int **A, int A_row, int A_col,
-        int **B, int B_row, int B_col,
-        int **C, int C_row, int C_col) {
-
-    ds_svc *ds_inst = ds_svc::instance();
+void multiply(int *A, int A_row, int A_col,
+        int *B, int B_row, int B_col,
+        int *C, int C_row, int C_col) {
 
     /* get svr insts from directory service */
+    ds_svc *ds_inst = ds_svc::instance();
     std::vector<svr_inst_t> svr_insts_list;
-    int ret = ds_inst->get_insts_by_name("comp_svr", svr_insts_list);
-    assert(0 == ret);
-
-    for (int i = 0; i < (int)svr_insts_list.size(); ++i) {
-        svr_inst_t &svr_inst = svr_insts_list[i];
-        RPC_DEBUG("svr instant [%d], name=%s, version=%s, id=%s, ip=%s, port=%u",
-                i, svr_inst.name.c_str(), svr_inst.version.c_str(), svr_inst.id.c_str(), 
-                svr_inst.ip.c_str(), svr_inst.port);
-    }
+    assert(0 == ds_inst->get_insts_by_name("comp_svr", svr_insts_list));
 
     /* choose a svr inst randomly */
-    int index = rand() % svr_insts_list.size();
-    svr_inst_t &svr_inst = svr_insts_list[index];
+    svr_inst_t &svr_inst = svr_insts_list[rand() % svr_insts_list.size()];
     RPC_INFO("choose svr instant, name=%s, version=%s, id=%s, ip=%s, port=%u",
             svr_inst.name.c_str(), svr_inst.version.c_str(), svr_inst.id.c_str(), 
             svr_inst.ip.c_str(), svr_inst.port);
 
-    basic_proto ap;
-    ap.add_matrix(A, A_row, A_col);
-    ap.add_matrix(B, B_row, B_col);
-    ap.add_matrix(C, C_row, C_col);
+    /* marshalling */
+    basic_proto inpro;
+    inpro.add_matrix(A, A_row, A_col);
+    inpro.add_matrix(B, B_row, B_col);
+    inpro.add_matrix(C, C_row, C_col);
 
-    std::string req_head;
-    char tbuf[32] = { 0 };
-    req_head += "POST /multiply HTTP/1.1\r\n";
-    req_head += "Host: " + svr_inst.ip + "\r\n";
-    req_head += "Content-Length: ";
-    sprintf(tbuf, "%d", ap.get_buf_len());
-    req_head += tbuf;
-    req_head += "\r\n\r\n";
-
-    std::string req_body(ap.get_buf(), ap.get_buf_len());
-
-    /* request for computing */
+    std::string req_head = gen_http_head(
+            "/multiply", svr_inst.ip, inpro.get_buf_len());
+    std::string req_body(inpro.get_buf(), inpro.get_buf_len());
     std::string rsp_head, rsp_body;
-    
-    int conn_timeout_ms = 2000;
-    int send_timeout_ms = 2000;
-    int recv_timeout_ms = 2000;
-    
-    std::vector<std::string> ips_list;
-    ips_list.push_back(svr_inst.ip.c_str());
-    
-    http_talk(ips_list, svr_inst.port, req_head, req_body, rsp_head, rsp_body, conn_timeout_ms, send_timeout_ms, recv_timeout_ms);
-    
-    /* data unmarshalling */
-    basic_proto ap_rsp(rsp_body.data(), rsp_body.size());
-    return;
 
-    //return retval;
+    /* TODO: retalk */
+    http_talk(svr_inst.ip, svr_inst.port, 
+            req_head, req_body, rsp_head, rsp_body);
+    
+    /* unmarshalling */
+    basic_proto outpro(rsp_body.data(), rsp_body.size());
+    int *A_bak, *B_bak, *C_bak;
+    outpro.read_matrix(A_bak, A_row, A_col);
+    outpro.read_matrix(B_bak, B_row, B_col);
+    outpro.read_matrix(C_bak, C_row, C_col);
+
+    memcpy(A, A_bak, sizeof(int) * A_row * A_col);
+    memcpy(B, B_bak, sizeof(int) * B_row * B_col);
+    memcpy(C, C_bak, sizeof(int) * C_row * C_col);
+    return;
 }

@@ -108,6 +108,51 @@ int http_recv(int fd, std::string &head,
 /**
  * @brief http talk
  *
+ * @param ip
+ * @param port
+ * @param req_head
+ * @param req_body
+ * @param rsp_head
+ * @param rsp_body
+ * @param conn_timeout_ms
+ * @param send_timeout_ms
+ * @param recv_timeout_ms
+ *
+ * @return 
+ */
+int http_talk(const std::string &ip, unsigned short port,
+        const std::string &req_head, const std::string &req_body,
+        std::string &rsp_head, std::string &rsp_body,
+        int conn_timeout_ms, int send_timeout_ms, int recv_timeout_ms) {
+
+    /* connect to remote server */
+    int fd = connect_ex((char*)ip.c_str(), port, conn_timeout_ms);
+    if (-1 == fd) {
+        RPC_WARNING("connect_ex() failed, fd=%d, ip=%s, port=%u", 
+                fd, ip.c_str(), port);
+    }
+
+    /* send data to the remote server */
+    int ret = http_send(fd, req_head, req_body, send_timeout_ms);
+    if (ret < 0) {
+        RPC_WARNING("http_send() error, fd=%d", fd);
+        return -1;
+    }
+
+    /* recv response from remote server */
+    ret = http_recv(fd, rsp_head, rsp_body, recv_timeout_ms);
+    if (ret < 0) {
+        RPC_WARNING("http_recv() error, fd=%d", fd);
+        return -1;
+    }
+
+    RPC_DEBUG("%s", rsp_head.c_str());
+    return 0;
+}
+
+/**
+ * @brief http talk
+ *
  * @param ips_list available ips of the service
  * @param port service port
  * @param req_head

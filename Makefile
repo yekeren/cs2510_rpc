@@ -21,16 +21,18 @@ all: $(SVR_DS) $(SVR_CS)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # making the cli_lib
-$(CLI_LIB): main_cli.o add_stub_cli.o wc_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o basic_proto.o
+$(CLI_LIB): main_cli.o multiply_stub_cli.o add_stub_cli.o wc_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o basic_proto.o template.o
 	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) \
 		main_cli.o \
 		add_stub_cli.o \
 		wc_stub_cli.o \
+		multiply_stub_cli.o \
 		ds_svc.o \
 		rpc_net.o \
 		rpc_http.o \
 		ezxml.o \
 		basic_proto.o \
+        template.o
 #		add_proto.o
 
 main_cli.o: main_cli.cpp
@@ -42,8 +44,8 @@ add_stub_cli.o: src/add_stub_cli.cpp
 wc_stub_cli.o: src/wc_stub_cli.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/wc_stub_cli.cpp
 
-#add_proto.o: src/add_proto.cpp
-#	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_proto.cpp
+multiply_stub_cli.o: src/multiply_stub_cli.cpp
+	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/multiply_stub_cli.cpp
 
 basic_proto.o: src/basic_proto.cpp
 	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/basic_proto.cpp

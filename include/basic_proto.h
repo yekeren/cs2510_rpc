@@ -24,8 +24,8 @@ class basic_proto{
         void add_binary(const char* bin, int bin_len);
         int read_binary(int bin_len, char* &bin);
 
-        void add_matrix(int **data, int row, int col);
-        int read_matrix(int **&data, int &row, int &col);
+        void add_matrix(int *data, int row, int col);
+        int read_matrix(int *&data, int &row, int &col);
 
         void add_array(int *data, int size);
         int read_array(int *&data, int &size);

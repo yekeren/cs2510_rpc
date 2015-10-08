@@ -59,47 +59,40 @@ int basic_proto::read_array(int *&data, int &size) {
         return -1;
     }
     char *ptr = NULL;
-    if (read_binary(size * sizeof(int), ptr)) {
+    if (read_binary(size * sizeof(int), ptr) < 0) {
         return -1;
     }
     data = (int*)ptr;
     return 0;
 }
 
-void basic_proto::add_matrix(int **data, int row, int col) {
+void basic_proto::add_matrix(int *data, int row, int col) {
     add_int(row);
     add_int(col);
-    for (int i = 0; i < row; ++i) {
-        add_binary((const char*)data[i], sizeof(int) * col);
-    }
+    add_binary((const char*)data, sizeof(int) * row * col);
 }
 
-int basic_proto::read_matrix(int **&data, int &row, int &col) {
+int basic_proto::read_matrix(int *&data, int &row, int &col) {
     if (read_int(row) < 0) {
         return -1;
     }
     if (read_int(col) < 0) {
         return -1;
     }
-    data = (int**)malloc(sizeof(int*) * row);
-    for (int i = 0; i < row; ++i) {
-        char *ptr = NULL;
-        if (read_binary(sizeof(int) * col, ptr) < 0) {
-            return -1;
-        }
-        data[i] = (int*)ptr;
+    char *ptr = NULL;
+    if (read_binary(sizeof(int) * row * col, ptr) < 0) {
+        return -1;
     }
+    data = (int*)ptr;
     return 0;
 }
 
 void basic_proto::add_string(int str_len, const char* str){
-    //m_encoded_len = 0;
     add_int(str_len);
     add_binary(str, str_len);
 }
 
 int basic_proto::read_string(int &str_len, char* &bin){
-    //m_encoded_len = 0;
     if(read_int(str_len) < 0){
         return -1;
     }
@@ -116,5 +109,3 @@ int basic_proto::get_buf_len(){
 const char* basic_proto::get_buf(){
     return m_buf.data();
 }
-
-

@@ -1,5 +1,6 @@
 #include "cs_svr.h"
 #include <string.h>
+#include <assert.h>
 #include "common_def.h"
 #include "rpc_net.h"
 #include "rpc_log.h"
@@ -7,13 +8,15 @@
 #include "ezxml.h"
 #include "basic_proto.h"
 
-void print_matrix(int **k, int row, int col) {
+void print_matrix(int *k, int row, int col) {
+    RPC_TERMINAL("%d * %d\n", row, col);
     for (int i = 0; i < row; ++i) {
         for (int j = 0; j < col; ++j) {
-            RPC_TERMINAL("%4d", k[i][j]);
+            RPC_TERMINAL("%4d", k[i * col + j]);
         }
         RPC_TERMINAL("\n");
     }
+    RPC_TERMINAL("\n");
 }
 
 int add(int a, int b) {
@@ -38,9 +41,9 @@ int max(int size, int *data) {
     return retval;
 }
 
-void multiply(int **A, int A_row, int A_col,
-        int **B, int B_row, int B_col,
-        int **C, int C_row, int C_col) {
+void multiply(int *A, int A_row, int A_col,
+        int *B, int B_row, int B_col,
+        int *C, int C_row, int C_col) {
 
     RPC_TERMINAL("matrix A:\n");
     print_matrix(A, A_row, A_col);
@@ -48,8 +51,17 @@ void multiply(int **A, int A_row, int A_col,
     RPC_TERMINAL("matrix B:\n");
     print_matrix(B, B_row, B_col);
 
+    memset(C, 0, sizeof(int) * C_row * C_col);
+    for (int i = 0; i < A_row; ++i) {
+        for (int j = 0; j < B_col; ++j) {
+            for (int k = 0; k < A_col; ++k) {
+                C[i * C_col + j] += A[i * A_col + k] * B[k * B_col + j];
+            }
+        }
+    }
     RPC_TERMINAL("matrix C:\n");
     print_matrix(C, C_row, C_col);
+
 }
 
 cs_event::cs_event(svr_base *svr): 
@@ -101,6 +113,9 @@ void cs_event::dsptch_http_request(const std::string &uri,
     }
     else if (uri.find("/wc")==0){
         process_wc(req_body, rsp_head, rsp_body);
+    }
+    else if (uri.find("/multiply")==0){
+        process_multiply(req_body, rsp_head, rsp_body);
     }
     else {
         process_default(uri, req_body, rsp_head, rsp_body);
@@ -167,10 +182,10 @@ void cs_event::process_wc(const std::string &req_body,
 void cs_event::process_multiply(const std::string &req_body, 
         std::string &rsp_head, std::string &rsp_body) {
 
-    basic_proto bpin(rsp_body.data(), rsp_body.size());
+    basic_proto bpin(req_body.data(), req_body.size());
     basic_proto bpout;
 
-    int **A = NULL, **B = NULL, **C = NULL;
+    int *A = NULL, *B = NULL, *C = NULL;
     int A_row, A_col;
     int B_row, B_col;
     int C_row, C_col;
@@ -184,10 +199,6 @@ void cs_event::process_multiply(const std::string &req_body,
     bpout.add_matrix(A, A_row, A_col);
     bpout.add_matrix(B, B_row, B_col);
     bpout.add_matrix(C, C_row, C_col);
-
-    free(A);
-    free(B);
-    free(C);
 
     rsp_head = gen_http_head("200 OK", bpout.get_buf_len());
     rsp_body.assign(bpout.get_buf(), bpout.get_buf_len());
