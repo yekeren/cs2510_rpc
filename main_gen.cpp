@@ -45,6 +45,72 @@ static bool comp_index(const param_t &a, const param_t &b) {
  * @param xml_filename
  * @param filename
  */
+
+static void gen_req_rsp(FILE *fp, const char *name){
+    std::string nameStr = name;
+    file_writeln(fp, std::string("std::string req_head = gen_http_head(") + "\"" + "/" + nameStr + "\"" + ", svr_inst.ip, inpro.get_buf_len());");
+    file_writeln(fp, std::string("std::string req_body(inpro.get_buf(), inpro.get_buf_len());"));
+    file_writeln(fp, std::string("std::string rsp_head, rsp_body;"));
+    file_writeln(fp, std::string("http_talk(svr_inst.ip, svr_inst.port, req_head, req_body, rsp_head, rsp_body);"));
+    file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
+}
+
+static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params){
+    file_writeln(fp, " { \n");
+    file_writeln(fp, "basic_proto inpro;");
+    std::string nameStr = name;
+    if (nameStr == "multiply"){
+        for (int i = 0; i < params.size(); ++i) {
+            param_t &param = params[i];
+            file_write(fp, std::string("inpro.add_matrix("));
+            file_write(fp, param.name + ", " + param.name + "_row," + param.name + "_col");
+            file_writeln(fp,std::string(");"));
+        }
+        gen_req_rsp(fp, nameStr.c_str());
+        for (int i = 0; i < params.size(); ++i){
+            param_t &param = params[i];
+            file_writeln(fp, std::string("int ") + "*" + param.name + "_bak;");
+            file_writeln(fp, std::string("outpro.read_matrix(") + param.name + "_bak, " + param.name + "_row, " + param.name + "_col);");
+        }
+        for (int i = 0; i < params.size(); ++i){
+            param_t &param = params[i];
+            file_writeln(fp, std::string("memcpy(") + param.name + ", " + param.name + "_bak, " + "sizeof(int) * " + param.name + "_row" + " * " + param.name + "_col);");
+        }
+        file_writeln(fp, "return;");
+    }
+    else if (nameStr == "max" || nameStr == "min"){
+        //printf("%d\n", params.size());
+        file_write(fp, std::string("inpro.add_array("));
+        file_writeln(fp, params[0].name + ", " + params[0].name + "_len);");
+        gen_req_rsp(fp, nameStr.c_str());
+        file_writeln(fp, std::string("int retval;"));
+        file_writeln(fp, std::string("outpro.read_array(") + params[0].name + ", " + params[0].name + "_len);");
+        file_writeln(fp, std::string("outpro.read_int(retval);"));
+        file_writeln(fp, std::string("return retval;"));
+        
+    }
+    else if (nameStr == "sort"){
+        file_write(fp, std::string("inpro.add_array("));
+        file_writeln(fp, params[0].name + ", " + params[0].name + "_len);");
+        gen_req_rsp(fp, nameStr.c_str());
+        file_writeln(fp, std::string("int *ret_array;"));
+        file_writeln(fp, std::string("outpro.read_array(ret_array,") + params[0].name + "_len);");
+        file_writeln(fp, std::string("return ret_array;"));
+        
+    }
+    else if (nameStr == "wc"){
+        file_writeln(fp, std::string("std::string str = ") + params[0].name + ";");
+        file_writeln(fp, std::string("inpro.add_string(str.size(), str.data());"));
+        gen_req_rsp(fp, nameStr.c_str());
+        file_writeln(fp, std::string("int str_len, retval;"));
+        file_writeln(fp, std::string("char *back_str;"));
+        file_writeln(fp, std::string("outpro.read_string(str_len, back_str);"));
+        file_writeln(fp, std::string("outpro.read_int(retval);"));
+        file_writeln(fp, std::string("return retval;"));
+    }
+    file_writeln(fp, "}\n");
+}
+
 static void generate_common_head(const char *xml_filename,
         const char *filename) {
     FILE *fp = fopen(filename, "w");
@@ -68,6 +134,7 @@ static void generate_common_head(const char *xml_filename,
     for (ezxml_t child = ezxml_child(root, "procedure"); child != NULL; child = child->next) {
         const char *name = ezxml_child(child, "name")->txt;
         const char *ret_type = ezxml_child(child, "return")->txt;
+        
 
         char line[2048] = { 0 };
         int offsize = sprintf(line, "%s %s(", ret_type, name);
@@ -108,6 +175,7 @@ static void generate_common_head(const char *xml_filename,
  * @param xml_filename
  * @param filename
  */
+
 static void generate_client_stub(const char *xml_filename,
         const char *filename) {
 
@@ -145,8 +213,7 @@ static void generate_client_stub(const char *xml_filename,
         }
         offsize += sprintf(line + offsize, ")");
         file_write(fp, line);
-        file_writeln(fp, " { \n");
-        file_writeln(fp, "}\n");
+        generate_client_content_stub(fp, name, ret_type, params);
     }
 
     ezxml_free(root);
