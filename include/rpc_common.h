@@ -3,7 +3,18 @@
 
 #include <string>
 #include <vector>
-#include "common_def.h"
+
+#define RPC_CONN_TIMEOUT 5000
+#define RPC_RECV_TIMEOUT 5000
+#define RPC_SEND_TIMEOUT 5000
+
+struct svr_inst_t {
+    int id;
+    std::string name;
+    std::string version;
+    std::string ip;
+    unsigned short port;
+};
 
 /**
  * @brief locate server instances

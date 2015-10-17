@@ -38,7 +38,7 @@ void *svr_thrd::run_routine(void *args) {
  * @brief 
  */
 void svr_thrd::run_routine() {
-    RPC_INFO("thread started");
+    RPC_DEBUG("thread started");
     while (this->is_running()) {
 
         io_event *evt = NULL;
@@ -67,7 +67,7 @@ void svr_thrd::run_routine() {
             evt->release();
         }
     }
-    RPC_INFO("thread stoped");
+    RPC_DEBUG("thread stoped");
 }
 
 /**

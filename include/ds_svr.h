@@ -2,9 +2,9 @@
 #define __DS_SVR_H__
 
 #include <map>
-#include "http_event.h"
-#include "common_def.h"
 #include "ezxml.h"
+#include "http_event.h"
+#include "rpc_common.h"
 #include "svr_base.h"
 
 /* svr_id -> <svr_inst_t, check_time> */

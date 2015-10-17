@@ -4,9 +4,9 @@
 #include "rpc_log.h"
 #include "rpc_net.h"
 #include "rpc_http.h"
+#include "rpc_common.h"
 #include "accept_event.h"
 #include "http_event.h"
-#include "common_def.h"
 
 /**************************************
  * svr_base
@@ -111,9 +111,9 @@ int svr_base::register_service(const std::string &ip,
     int ret = http_talk(ips_list, port, 
             req_head, req_body, 
             rsp_head, rsp_body,
-            DIR_SVR_CONN_TIMEOUT, 
-            DIR_SVR_SEND_TIMEOUT, 
-            DIR_SVR_RECV_TIMEOUT);
+            RPC_CONN_TIMEOUT, 
+            RPC_SEND_TIMEOUT, 
+            RPC_RECV_TIMEOUT);
     if (0 > ret) {
         RPC_WARNING("http_talk() failed");
         return -1;
@@ -154,9 +154,9 @@ int svr_base::unregister_service(const std::string &ip,
     int ret = http_talk(ips_list, port, 
             req_head, req_body, 
             rsp_head, rsp_body,
-            DIR_SVR_CONN_TIMEOUT, 
-            DIR_SVR_SEND_TIMEOUT, 
-            DIR_SVR_RECV_TIMEOUT);
+            RPC_CONN_TIMEOUT, 
+            RPC_SEND_TIMEOUT, 
+            RPC_RECV_TIMEOUT);
     if (0 > ret) {
         RPC_WARNING("http_talk() failed");
         return -1;
@@ -202,7 +202,7 @@ io_event *svr_base::create_event(int fd,
 
     evt->set_io_type('i');
     evt->set_state("read_head");
-    evt->set_timeout(HTTP_RECV_TIMEOUT);
+    evt->set_timeout(RPC_RECV_TIMEOUT);
     return evt;
 }
 

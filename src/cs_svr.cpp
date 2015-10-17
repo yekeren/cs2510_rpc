@@ -1,9 +1,9 @@
 #include "cs_svr.h"
 #include <string.h>
 #include <assert.h>
-#include "common_def.h"
 #include "rpc_net.h"
 #include "rpc_log.h"
+#include "rpc_common.h"
 #include "template.h"
 #include "ezxml.h"
 #include "basic_proto.h"
@@ -247,6 +247,6 @@ io_event *cs_svr::create_event(int fd,
 
     evt->set_io_type('i');
     evt->set_state("read_head");
-    evt->set_timeout(HTTP_RECV_TIMEOUT);
+    evt->set_timeout(RPC_RECV_TIMEOUT);
     return (io_event*)evt;
 }
