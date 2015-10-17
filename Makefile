@@ -1,108 +1,92 @@
-CXX='g++'
-CXXFLAGS='-g' '-std=c++0x'
-CC='gcc'
-CFLAGS='-g'
-
-CLI_LIB='rpc_cli'
-SVR_DS='rpc'
-SVR_DS='svr_ds'
-SVR_CS='svr_cs'
-
 INCLUDE='./include'
+
+CXX=g++
+CXXFLAGS=-g -std=c++0x -I$(INCLUDE)
+CC=gcc
+CFLAGS=-g -I$(INCLUDE)
+
+CLI_LIB=rpc_cli
+SVR_DS=svr_ds
+SVR_CS=svr_cs
+STUB_GEN=stub_gen
 
 cchighlight=\033[0;31m
 ccend=\033[0m
 
-all: $(SVR_DS) $(CLI_LIB)
-#all: $(CLI_LIB)
-all: $(SVR_DS) $(SVR_CS)
-#all: $(SVR_DS) 
-#$(SVR_CS)
+# compiling cpp files
+.cpp.obj:
+	${CXX} ${CXXFLAGS} -c $(.SOURCE)
+
+# compiling c files
+.c.obj:
+	${CC} ${CFLAGS} -c $(.SOURCE)
+
+# compiling the binary
+all: $(SVR_DS) $(SVR_CS) $(STUB_GEN)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
+# object files needed in directory server
+DS_OBJS=main_svr_ds.o \
+	src/svr_base.o \
+	src/svr_thrd.o \
+	src/rpc_net.o \
+	src/rpc_http.o \
+	src/io_event.o \
+	src/accept_event.o \
+	src/http_event.o \
+	src/ezxml.o \
+	src/ds_svr.o \
+	src/basic_proto.o \
+	src/template.o
+
+# object files needed in cs
+CS_OBJS=main_svr_cs.o \
+	src/svr_base.o \
+	src/svr_thrd.o \
+	src/rpc_net.o \
+	src/rpc_http.o \
+	src/io_event.o \
+	src/accept_event.o \
+	src/http_event.o \
+	src/ezxml.o \
+	src/cs_svr.o \
+	src/basic_proto.o \
+	src/template.o
+
+CLI_OBJS=main_cli.o \
+	src/multiply_stub_cli.o \
+	src/add_stub_cli.o \
+	src/wc_stub_cli.o \
+	src/ds_svc.o \
+	src/rpc_net.o \
+	src/rpc_http.o \
+	src/ezxml.o \
+	src/basic_proto.o \
+	src/template.o
+
+STUB_OBJS=main_gen.o \
+    src/ezxml.o
+
+$(STUB_GEN): $(STUB_OBJS)
+	$(CXX) $(CXXFLAGS) -lpthread -o $(STUB_GEN) $(STUB_OBJS)
+
 # making the cli_lib
-$(CLI_LIB): main_cli.o multiply_stub_cli.o add_stub_cli.o wc_stub_cli.o ds_svc.o rpc_net.o rpc_http.o ezxml.o basic_proto.o template.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) \
-		main_cli.o \
-		add_stub_cli.o \
-		wc_stub_cli.o \
-		multiply_stub_cli.o \
-		ds_svc.o \
-		rpc_net.o \
-		rpc_http.o \
-		ezxml.o \
-		basic_proto.o \
-        template.o
-#		add_proto.o
+$(CLI_LIB): $(CLI_OBJS)
+	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) $(CLI_OBJS)
 
-main_cli.o: main_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_cli.cpp
-
-add_stub_cli.o: src/add_stub_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/add_stub_cli.cpp
-
-wc_stub_cli.o: src/wc_stub_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/wc_stub_cli.cpp
-
-multiply_stub_cli.o: src/multiply_stub_cli.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/multiply_stub_cli.cpp
-
-basic_proto.o: src/basic_proto.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/basic_proto.cpp
-
-ds_svc.o: src/ds_svc.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svc.cpp
+# compiling svr_cs
+$(SVR_CS): $(CS_OBJS) 
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) $(CS_OBJS)
 
 # compiling svr_ds
-$(SVR_DS): main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o template.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_DS) main_svr_ds.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o ds_svr.o template.o
-
-$(SVR_CS): main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o basic_proto.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) main_svr_cs.o svr_base.o svr_thrd.o rpc_net.o rpc_http.o io_event.o accept_event.o http_event.o ezxml.o cs_svr.o template.o basic_proto.o
-
-main_svr_cs.o: main_svr_cs.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_svr_cs.cpp
-
-main_svr_ds.o: main_svr_ds.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c main_svr_ds.cpp
-
-svr_base.o: src/svr_base.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/svr_base.cpp
-
-svr_thrd.o: src/svr_thrd.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/svr_thrd.cpp
-
-io_event.o: src/io_event.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/io_event.cpp
-
-accept_event.o: src/accept_event.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/accept_event.cpp
-
-http_event.o: src/http_event.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/http_event.cpp
-
-ds_svr.o: src/ds_svr.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/ds_svr.cpp
-
-cs_svr.o: src/cs_svr.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/cs_svr.cpp
-
-template.o: src/template.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/template.cpp
-
-# common library for both server and client
-rpc_net.o: src/rpc_net.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/rpc_net.cpp
-
-rpc_http.o: src/rpc_http.cpp
-	$(CXX) $(CXXFLAGS) -I$(INCLUDE) -c src/rpc_http.cpp
-
-ezxml.o: src/ezxml.c
-	$(CC) $(CFLAGS) -I$(INCLUDE) -c src/ezxml.c
+$(SVR_DS): $(DS_OBJS)
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_DS) $(DS_OBJS)
 
 .PHONY: clean
 clean:
+	rm -f src/*.o
 	rm -f *.o
 	rm -f $(SVR_DS)
 	rm -f $(SVR_CS)
 	rm -f $(CLI_LIB)
+	rm -f $(STUB_GEN)

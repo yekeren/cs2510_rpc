@@ -1,0 +1,80 @@
+<program>
+    <id>2342134</id>
+    <name>computation_service</name>
+    <version>1.0.0</version>
+
+    <procedure>
+        <name>multiply</name>
+        <id>0</id>
+        <return>void</return>
+        <param>
+            <name>A</name>
+            <index>0</index>
+            <type>Matrix</type>
+        </param>
+        <param>
+            <name>C</name>
+            <index>2</index>
+            <type>Matrix</type>
+        </param>
+        <param>
+            <name>B</name>
+            <index>1</index>
+            <type>Matrix</type>
+        </param>
+    </procedure>
+    
+    <procedure>
+        <name>max</name>
+        <id>3</id>
+        <return>int</return>
+        <param>
+            <name>data</name>
+            <index>0</index>
+            <type>Array</type>
+        </param>
+    </procedure>
+
+    <procedure>
+        <name>add</name>
+        <id>2</id>
+        <return>int</return>
+        <param>
+            <name>a</name>
+            <index>0</index>
+            <type>int</type>
+        </param>
+        <param>
+            <name>b</name>
+            <index>1</index>
+            <type>int</type>
+        </param>
+    </procedure>
+
+    <procedure>
+        <name>add</name>
+        <id>2</id>
+        <return>int</return>
+        <param>
+            <name>a</name>
+            <index>0</index>
+            <type>double</type>
+        </param>
+        <param>
+            <name>b</name>
+            <index>1</index>
+            <type>double</type>
+        </param>
+    </procedure>
+
+    <procedure>
+        <name>wc</name>
+        <id>2</id>
+        <return>int</return>
+        <param>
+            <name>str</name>
+            <index>0</index>
+            <type>char*</type>
+        </param>
+    </procedure>
+</program>
