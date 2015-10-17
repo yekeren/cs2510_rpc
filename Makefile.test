@@ -3,4 +3,4 @@
 	${CXX} ${CXXFLAGS} -c $(.SOURCE)
 
 test: test.o main_test.o
-	$(CXX) $(CXXFLAGS) -lpthread -o test test.o
+	$(CXX) $(CXXFLAGS) -lpthread -o test test.o main_test.o
