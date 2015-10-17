@@ -14,8 +14,11 @@ class cs_event: public http_event {
         void dsptch_http_request(const std::string &uri, 
                 const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
 
-        void process_default(const std::string &uri,
+        void do_default(const std::string &uri,
                 const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
+
+        void do_get_svr_id(const std::string &req_body, 
+                std::string &rsp_head, std::string &rsp_body);
 
     public:
         void process_add(const std::string &req_body, 

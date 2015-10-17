@@ -2,17 +2,16 @@
 #define __DS_SVR_H__
 
 #include <map>
-#include <unordered_map>
 #include "http_event.h"
 #include "common_def.h"
 #include "ezxml.h"
 #include "svr_base.h"
 
 /* svr_id -> <svr_inst_t, check_time> */
-typedef std::map<std::string, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
+typedef std::map<int, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
 
-/* svc_name -> svr_insts_map_t */
-typedef std::unordered_map<std::string, svr_insts_map_t > svc_map_t;
+/* id + version -> svr_insts_map_t */
+typedef std::map<std::string, svr_insts_map_t> svc_map_t;
 
 class ds_event: public http_event {
     public:
@@ -65,14 +64,14 @@ class ds_event: public http_event {
                 const std::string &req_body, std::string &rsp_head, std::string &rsp_body, bool flag);
 
         /**
-         * @brief process get_insts_by_name request
+         * @brief process get_insts_by_id request
          *
          * @param uri
          * @param req_body
          * @param rsp_head
          * @param rsp_body
          */
-        void process_get_insts_by_name(const std::string &uri,
+        void process_get_insts_by_id(const std::string &uri,
                 const std::string &req_body, std::string &rsp_head, std::string &rsp_body);
 };
 
@@ -117,12 +116,13 @@ class ds_svr: public svr_base {
         void do_unregister(svr_inst_t &svr);
 
         /**
-         * @brief get server insts by name of service
+         * @brief get server insts by id of service
          *
-         * @param name
+         * @param id
+         * @param version
          * @param svr_insts_list
          */
-        void do_get_insts_by_name(const std::string &name,
+        void do_get_insts_by_id(int id, const std::string &version,
                 std::vector<svr_inst_t> &svr_insts_list);
 
     private:

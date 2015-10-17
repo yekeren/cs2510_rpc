@@ -8,6 +8,10 @@
 #include "ezxml.h"
 #include "basic_proto.h"
 
+#define RPC_ID 1
+#define RPC_NAME "computation_service"
+#define RPC_VERSION "1.0.0"
+
 void print_matrix(int *k, int row, int col) {
     RPC_TERMINAL("%d * %d\n", row, col);
     for (int i = 0; i < row; ++i) {
@@ -88,7 +92,7 @@ void cs_event::on_process() {
     m_svr->add_io_event(this);
 }
 
-void cs_event::process_default(const std::string &uri,
+void cs_event::do_default(const std::string &uri,
         const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
     RPC_WARNING("invalid request from client, uri=%s, ip=%s, port=%u", 
@@ -105,7 +109,10 @@ void cs_event::process_default(const std::string &uri,
 void cs_event::dsptch_http_request(const std::string &uri, 
         const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
 
-    if (uri.find("/add") == 0) {
+    if (uri.find("/get_svr_id") == 0) {
+        do_get_svr_id(req_body, rsp_head, rsp_body);
+    } 
+    else if (uri.find("/add") == 0) {
         process_add(req_body, rsp_head, rsp_body);
     }
     else if (uri.find("/max")==0){
@@ -118,8 +125,28 @@ void cs_event::dsptch_http_request(const std::string &uri,
         process_multiply(req_body, rsp_head, rsp_body);
     }
     else {
-        process_default(uri, req_body, rsp_head, rsp_body);
+        do_default(uri, req_body, rsp_head, rsp_body);
     }
+}
+
+void cs_event::do_get_svr_id(const std::string &req_body, 
+        std::string &rsp_head, std::string &rsp_body) {
+
+    char buf[1024] = { 0 };
+
+    ezxml_t root = ezxml_new("server");
+
+    sprintf(buf, "%d", RPC_ID);
+    ezxml_set_txt(ezxml_add_child(root, "id", 0), buf);
+
+    ezxml_set_txt(ezxml_add_child(root, "name", 0), RPC_NAME);
+    ezxml_set_txt(ezxml_add_child(root, "version", 0), RPC_VERSION);
+
+    rsp_body = ezxml_toxml(root);
+    ezxml_free(root);
+
+    rsp_head = gen_http_head("200 OK", rsp_body.size());
+    rsp_body.assign(rsp_body.data(), rsp_body.size());
 }
 
 void cs_event::process_add(const std::string &req_body, 
