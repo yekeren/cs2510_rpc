@@ -66,13 +66,8 @@ static void file_writeln(FILE *fp, const std::string &line) {
 }
 
 static void file_write(FILE *fp, const std::string &line) {
-<<<<<<< HEAD
-    fprintf(stdout, "%s", (line).c_str());
-    //fprintf(fp, "%s", (line).c_str());
-=======
     fprintf(fp, "%s", (line).c_str());
     //fprintf(stdout, "%s", (line).c_str());
->>>>>>> 90c96c25ad0a1c4a091648c9f83f1b61b48886b0
 }
 
 static std::string generate_param(const param_t &param) {
@@ -80,7 +75,7 @@ static std::string generate_param(const param_t &param) {
     if (param.type == "Matrix") {
         sprintf(buf, "int *%s, int %s_row, int %s_col", param.name.c_str(), param.name.c_str(), param.name.c_str());
     } 
-    else if (param.type == "Array" ){
+    else if (param.type == "Array" ) {
         sprintf(buf, "int %s_len, int *%s", param.name.c_str(), param.name.c_str());
     } 
     else if (param.type == "String") {
@@ -92,12 +87,12 @@ static std::string generate_param(const param_t &param) {
     return buf;
 }
 
-static std::string generate_svr_param_decl(const param_t &param) {
+static std::string gen_svr_param_decl(const param_t &param) {
     char buf[1024] = { 0 };
     if (param.type == "Matrix") {
         sprintf(buf, "int *%s; int %s_row; int %s_col;", param.name.c_str(), param.name.c_str(), param.name.c_str());
     } 
-    else if (param.type == "Array" ){
+    else if (param.type == "Array" ) {
         sprintf(buf, "int %s_len; int *%s;", param.name.c_str(), param.name.c_str());
     } 
     else if (param.type == "String") {
@@ -109,12 +104,12 @@ static std::string generate_svr_param_decl(const param_t &param) {
     return buf;
 }
 
-static std::string generate_svr_param(const param_t &param) {
+static std::string gen_svr_param(const param_t &param) {
     char buf[1024] = { 0 };
     if (param.type == "Matrix") {
         sprintf(buf, "%s, %s_row, %s_col", param.name.c_str(), param.name.c_str(), param.name.c_str());
     } 
-    else if (param.type == "Array" ){
+    else if (param.type == "Array" ) {
         sprintf(buf, "%s_len, int *%s", param.name.c_str(), param.name.c_str());
     } 
     else if (param.type == "String") {
@@ -126,12 +121,12 @@ static std::string generate_svr_param(const param_t &param) {
     return buf;
 }
 
-static std::string generate_svr_param_unmarshalling(const param_t &param) {
+static std::string gen_svr_param_unmarshalling(const param_t &param) {
     char buf[1024] = { 0 };
     if (param.type == "Matrix") {
         sprintf(buf, "proto_in.read_matrix(%s, %s_row, %s_col);", param.name.c_str(), param.name.c_str(), param.name.c_str());
     } 
-    else if (param.type == "Array" ){
+    else if (param.type == "Array" ) {
         sprintf(buf, "proto_in.read_array(%s, %s_len);", param.name.c_str(), param.name.c_str());
     }
     else if (param.type == "String") {
@@ -143,7 +138,7 @@ static std::string generate_svr_param_unmarshalling(const param_t &param) {
     return buf;
 }
 
-static std::string generate_svr_param_marshalling(const param_t &param) {
+static std::string gen_svr_param_marshalling(const param_t &param) {
     char buf[1024] = { 0 };
     if (param.type == "Matrix") {
         sprintf(buf, "proto_out.add_matrix(%s, %s_row, %s_col);", param.name.c_str(), param.name.c_str(), param.name.c_str());
@@ -356,6 +351,38 @@ std::string replace(const std::string &src,
     return str;
 }
 
+static void gen_svr_callee(const program_t &program,
+        const char *filename) {
+
+    FILE *fp = fopen(filename, "w");
+
+    FILE_WRITELN(fp, "#include \"%s.h\"\n", program.name.c_str());
+
+    /* generate procudures */
+    for (int i = 0; i < program.procedures.size(); ++i) {
+        const procedure_t &procedure = program.procedures[i];
+
+        char line[2048] = { 0 };
+        int offsize = sprintf(line, "%s %s(", procedure.rettype.c_str(), procedure.name.c_str());
+
+        for (int j = 0; j < procedure.params.size(); ++j) {
+            const param_t &param = procedure.params[j];
+            std::string param_str = generate_param(param);
+            if (j != procedure.params.size() - 1) {
+                offsize += sprintf(line + offsize, "%s, ", param_str.c_str());
+            } else {
+                offsize += sprintf(line + offsize, "%s", param_str.c_str());
+            }
+        }
+        offsize += sprintf(line + offsize, ")");
+        FILE_WRITE(fp, "%s", line);
+        FILE_WRITE(fp, "{\n");
+        FILE_WRITELN(fp, "}\n");
+    }
+
+    fclose(fp);
+}
+
 /**
  * @brief generate server stub
  *
@@ -364,7 +391,42 @@ std::string replace(const std::string &src,
  * @param filename
  */
 
-static void generate_server_stub(const program_t &program,
+static void gen_svr_stub_h(const program_t &program,
+        const char *tmpl_filename, const char *filename) {
+
+    FILE *fp_tmpl = fopen(tmpl_filename, "r");
+    FILE *fp_outp = fopen(filename, "w");
+
+    char line[1024] = { 0 };
+    while (fgets(line, sizeof(line), fp_tmpl) != NULL) {
+        /* output template contents */
+        if (strstr(line, "$stub$")) {
+            for (int i = 0; i < program.procedures.size(); ++i) {
+                const procedure_t &procedure = program.procedures[i];
+                FILE_WRITELN(fp_outp, "void process_%s(const std::string &req_body,", procedure.name.c_str());
+                FILE_WRITELN(fp_outp, TT"std::string &rsp_head, std::string &rsp_body) {");
+            }
+        }
+        else {
+            std::string str_line = replace(line, "$id$", num_to_str(program.id));
+            str_line = replace(str_line, "$name$", program.name);
+            str_line = replace(str_line, "$version$", program.version);
+            FILE_WRITE(fp_outp, "%s", str_line.c_str());
+        }
+    }
+    fclose(fp_outp);
+    fclose(fp_tmpl);
+}
+
+/**
+ * @brief generate server stub
+ *
+ * @param xml_filename
+ * @param tmpl_filename
+ * @param filename
+ */
+
+static void gen_svr_stub_cpp(const program_t &program,
         const char *tmpl_filename, const char *filename) {
 
     FILE *fp_tmpl = fopen(tmpl_filename, "r");
@@ -399,11 +461,11 @@ static void generate_server_stub(const program_t &program,
 
                 /* generate unmarchalling codes */
                 for (int j = 0; j < procedure.params.size(); ++j) {
-                    FILE_WRITELN(fp_outp, T"%s", generate_svr_param_decl(procedure.params[j]).c_str());
+                    FILE_WRITELN(fp_outp, T"%s", gen_svr_param_decl(procedure.params[j]).c_str());
                 }
                 FILE_WRITELN(fp_outp, "");
                 for (int j = 0; j < procedure.params.size(); ++j) {
-                    FILE_WRITELN(fp_outp, T"%s", generate_svr_param_unmarshalling(procedure.params[j]).c_str());
+                    FILE_WRITELN(fp_outp, T"%s", gen_svr_param_unmarshalling(procedure.params[j]).c_str());
                 }
                 
                 /* callee */
@@ -415,7 +477,7 @@ static void generate_server_stub(const program_t &program,
                     offsize = sprintf(line, T"%s ret_val = %s(", procedure.rettype.c_str(), procedure.name.c_str());
                 }
                 for (int j = 0; j < procedure.params.size(); ++j) {
-                    std::string param_str = generate_svr_param(procedure.params[j]);
+                    std::string param_str = gen_svr_param(procedure.params[j]);
                     if (j > 0) {
                         offsize += sprintf(line + offsize, ", ");
                     }
@@ -426,7 +488,7 @@ static void generate_server_stub(const program_t &program,
 
                 /* generate marchalling codes */
                 for (int j = 0; j < procedure.params.size(); ++j) {
-                    FILE_WRITELN(fp_outp, T"%s", generate_svr_param_marshalling(procedure.params[j]).c_str());
+                    FILE_WRITELN(fp_outp, T"%s", gen_svr_param_marshalling(procedure.params[j]).c_str());
                 }
                 if (procedure.rettype != "void") {
                     FILE_WRITELN(fp_outp, "");
@@ -494,8 +556,11 @@ int main(int argc, char *argv[]) {
     init("conf/idl.xml", program);
 
     generate_common_head(program, "test.h");
-    generate_client_stub(program, "test.cpp");
-    //generate_server_stub(argv[1], "test_svr.cpp");
+    //generate_client_stub(program, "test.cpp");
+    gen_svr_stub_h(program, "conf/svr.tmpl.h", "test_svr.h");
+    gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", "test_svr.cpp");
+    gen_svr_callee(program, "test.cpp");
+    gen_svr_main(program, "conf/main_svr.tmpl.cpp", "test_main.cpp");
 
     exit(0);
 }

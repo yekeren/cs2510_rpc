@@ -7,6 +7,9 @@
 #include "ezxml.h"
 #include "basic_proto.h"
 
+/**************************************
+ * $name$_event
+ **************************************/
 $name$_event::$name$_event(svr_base *svr): 
     http_event(svr) {
 }
@@ -71,6 +74,9 @@ void $name$_event::do_get_svr_id(const std::string &req_body,
 
 $stub$
     
+/**************************************
+ * $name$_svr
+ **************************************/
 $name$_svr::$name$_svr() {
 }
 

@@ -2,7 +2,7 @@
     <directory_server_ip>127.0.0.1</directory_server_ip>
     <directory_server_port>80</directory_server_port>
     <id>2342134</id>
-    <name>computation_service</name>
+    <name>cs</name>
     <version>1.0.0</version>
 
     <procedure>
@@ -54,29 +54,13 @@
     </procedure>
 
     <procedure>
-        <name>add</name>
-        <id>2</id>
-        <return>int</return>
-        <param>
-            <name>a</name>
-            <index>0</index>
-            <type>double</type>
-        </param>
-        <param>
-            <name>b</name>
-            <index>1</index>
-            <type>double</type>
-        </param>
-    </procedure>
-
-    <procedure>
         <name>wc</name>
         <id>2</id>
         <return>int</return>
         <param>
             <name>str</name>
             <index>0</index>
-            <type>char*</type>
+            <type>String</type>
         </param>
     </procedure>
 </program>
