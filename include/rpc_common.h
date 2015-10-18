@@ -17,6 +17,15 @@ struct svr_inst_t {
 };
 
 /**
+ * @brief 
+ *
+ * @param num
+ *
+ * @return 
+ */
+std::string num_to_str(int num);
+
+/**
  * @brief locate server instances
  *
  * @param ip address of directory server

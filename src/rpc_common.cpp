@@ -4,6 +4,19 @@
 #include "rpc_http.h"
 
 /**
+ * @brief 
+ *
+ * @param num
+ *
+ * @return 
+ */
+std::string num_to_str(int num) {
+    char buf[1024] = { 0 };
+    sprintf(buf, "%d", num);
+    return buf;
+}
+
+/**
  * @brief locate server instances
  *
  * @param ip address of directory server

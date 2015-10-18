@@ -5,6 +5,18 @@
 #include "ezxml.h"
 #include "rpc_log.h"
 
+#define T "    "
+#define TT "        "
+#define TTT "            "
+
+/**
+ * $id$
+ * $name$
+ * $version$
+ * $dispatch$
+ * $stub$
+ */
+
 /* param_t */
 struct param_t {
     int index;
@@ -40,24 +52,107 @@ static void usage(int argc, char *argv[]) {
     printf("Usage: %s idl_filename output_filename\n", argv[0]);
 }
 
+#define FILE_WRITELN(fp, format, args...) \
+    fprintf(fp, format"\n", ##args)
+    //fprintf(stdout, format"\n", ##args)
+
+#define FILE_WRITE(fp, format, args...) \
+    fprintf(fp, format, ##args)
+    //fprintf(stdout, format, ##args)
+
 static void file_writeln(FILE *fp, const std::string &line) {
     puts((line).c_str());
     //fputs((line + "\n").c_str(), fp);
 }
 
 static void file_write(FILE *fp, const std::string &line) {
-    //fprintf(fp, "%s", (line).c_str());
     fprintf(stdout, "%s", (line).c_str());
+    //fprintf(fp, "%s", (line).c_str());
 }
 
 static std::string generate_param(const param_t &param) {
+    char buf[1024] = { 0 };
     if (param.type == "Matrix") {
-        return "int *" + param.name + ", int " + param.name + "_row, int " + param.name + "_col";
-    } else if (param.type == "Array" ){
-        return "int " + param.name + "_len, int *" + param.name;
-    } else {
-        return param.type + " " + param.name;
+        sprintf(buf, "int *%s, int %s_row, int %s_col", param.name.c_str(), param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "Array" ){
+        sprintf(buf, "int %s_len, int *%s", param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "String") {
+        sprintf(buf, "char *%s, int %s_len", param.name.c_str(), param.name.c_str());
+    } 
+    else {
+        sprintf(buf, "%s %s", param.type.c_str(), param.name.c_str());
     }
+    return buf;
+}
+
+static std::string generate_svr_param_decl(const param_t &param) {
+    char buf[1024] = { 0 };
+    if (param.type == "Matrix") {
+        sprintf(buf, "int *%s; int %s_row; int %s_col;", param.name.c_str(), param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "Array" ){
+        sprintf(buf, "int %s_len; int *%s;", param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "String") {
+        sprintf(buf, "char *%s; int %s_len;", param.name.c_str(), param.name.c_str());
+    } 
+    else {
+        sprintf(buf, "%s %s;", param.type.c_str(), param.name.c_str());
+    }
+    return buf;
+}
+
+static std::string generate_svr_param(const param_t &param) {
+    char buf[1024] = { 0 };
+    if (param.type == "Matrix") {
+        sprintf(buf, "%s, %s_row, %s_col", param.name.c_str(), param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "Array" ){
+        sprintf(buf, "%s_len, int *%s", param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "String") {
+        sprintf(buf, "%s, %s_len", param.name.c_str(), param.name.c_str());
+    } 
+    else {
+        sprintf(buf, "%s", param.name.c_str());
+    }
+    return buf;
+}
+
+static std::string generate_svr_param_unmarshalling(const param_t &param) {
+    char buf[1024] = { 0 };
+    if (param.type == "Matrix") {
+        sprintf(buf, "proto_in.read_matrix(%s, %s_row, %s_col);", param.name.c_str(), param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "Array" ){
+        sprintf(buf, "proto_in.read_array(%s, %s_len);", param.name.c_str(), param.name.c_str());
+    }
+    else if (param.type == "String") {
+        sprintf(buf, "proto_in.read_string(%s_len, %s);", param.name.c_str(), param.name.c_str());
+    }
+    else {
+        sprintf(buf, "proto_in.read_%s(%s);", param.type.c_str(), param.name.c_str());
+    }
+    return buf;
+}
+
+static std::string generate_svr_param_marshalling(const param_t &param) {
+    char buf[1024] = { 0 };
+    if (param.type == "Matrix") {
+        sprintf(buf, "proto_out.add_matrix(%s, %s_row, %s_col);", param.name.c_str(), param.name.c_str(), param.name.c_str());
+    } 
+    else if (param.type == "Array" ){
+        sprintf(buf, "proto_out.add_array(%s, %s_len);", param.name.c_str(), param.name.c_str());
+    }
+    else if (param.type == "String") {
+        sprintf(buf, "proto_out.add_string(%s_len, %s);", param.name.c_str(), param.name.c_str());
+    }
+    else {
+        sprintf(buf, "proto_out.add_%s(%s);", param.type.c_str(), param.name.c_str());
+    }
+    return buf;
 }
 
 static bool comp_index(const param_t &a, const param_t &b) {
@@ -228,78 +323,112 @@ static void generate_client_stub(const char *xml_filename,
     fclose(fp);
 }
 
-class svr_stub_gen {
-    public:
-        svr_stub_gen() {
-        }
-        virtual ~svr_stub_gen() {
-        }
-    public:
-        void set_id(int id) {
-            m_id = id;
-        }
-        void set_version(const std::string &version) {
-            m_version = version;
-        }
-        void set_name(const std::string &name) {
-            m_name = name;
-        }
+std::string replace(const std::string &src, 
+        const std::string &from, const std::string &to) {
 
-    private:
-        std::string m_name;
-        std::string m_version;
-        int m_id;
-};
+    size_t pos = 0;
+    std::string str(src);
+
+    while ((pos = str.find(from, pos)) != std::string::npos) {
+        str.replace(pos, from.length(), to);
+        pos += to.length();
+    }
+    return str;
+}
 
 /**
  * @brief generate server stub
  *
  * @param xml_filename
+ * @param tmpl_filename
  * @param filename
  */
 
-static void generate_server_stub(const char *xml_filename,
-        const char *filename) {
+static void generate_server_stub(const program_t &program,
+        const char *tmpl_filename, const char *filename) {
 
-    FILE *fp = fopen(filename, "w");
-    ezxml_t root = ezxml_parse_file(xml_filename);
+    FILE *fp_tmpl = fopen(tmpl_filename, "r");
+    FILE *fp_outp = fopen(filename, "w");
 
-    file_writeln(fp, "#include \"test.h\"");
-    file_writeln(fp, "");
-
-    /* generate procudures */
-    for (ezxml_t child = ezxml_child(root, "procedure"); child != NULL; child = child->next) {
-        const char *name = ezxml_child(child, "name")->txt;
-        const char *ret_type = ezxml_child(child, "return")->txt;
-        
-        char line[2048] = { 0 };
-        int offsize = sprintf(line, "%s %s(", ret_type, name);
-
-        std::vector<param_t> params;
-        for (ezxml_t sub_child = ezxml_child(child, "param"); sub_child != NULL; sub_child = sub_child->next) {
-            param_t param;
-            param.index = atoi(ezxml_child(sub_child, "index")->txt);
-            param.type = ezxml_child(sub_child, "type")->txt;
-            param.name = ezxml_child(sub_child, "name")->txt;
-            params.push_back(param);
-        }
-        std::sort(params.begin(), params.end(), comp_index);
-        for (int i = 0; i < params.size(); ++i) {
-            param_t &param = params[i];
-            std::string param_str = generate_param(param);
-            if (i != params.size() - 1) {
-                offsize += sprintf(line + offsize, "%s, ", param_str.c_str());
-            } else {
-                offsize += sprintf(line + offsize, "%s", param_str.c_str());
+    char line[1024] = { 0 };
+    while (fgets(line, sizeof(line), fp_tmpl) != NULL) {
+        /* dispatch http requests */
+        if (strstr(line, "$dispatch$")) {
+            for (int i = 0; i < program.procedures.size(); ++i) {
+                const procedure_t &procedure = program.procedures[i];
+                if (i == 0) {
+                    FILE_WRITELN(fp_outp, TT"if (uri.find(\"/%s\") == 0) {", procedure.name.c_str());
+                } else {
+                    FILE_WRITELN(fp_outp, TT"else if (uri.find(\"/%s\") == 0) {", procedure.name.c_str());
+                }
+                FILE_WRITELN(fp_outp, TTT"process_%s(req_body, rsp_head, rsp_body);", procedure.name.c_str());
+                FILE_WRITELN(fp_outp, TT"}");
             }
-        }
-        offsize += sprintf(line + offsize, ")");
-        file_write(fp, line);
-        file_writeln(fp, ";\n");
-    }
+        } 
+        /* generate server stub */
+        else if (strstr(line, "$stub$")) {
+            for (int i = 0; i < program.procedures.size(); ++i) {
+                const procedure_t &procedure = program.procedures[i];
+                FILE_WRITELN(fp_outp, "void %s_event::process_%s(const std::string &req_body,", program.name.c_str(), procedure.name.c_str());
+                FILE_WRITELN(fp_outp, TT"std::string &rsp_head, std::string &rsp_body) {");
 
-    ezxml_free(root);
-    fclose(fp);
+                FILE_WRITELN(fp_outp, "");
+                FILE_WRITELN(fp_outp, T"basic_proto proto_in(req_body.data(), req_body.size());");
+                FILE_WRITELN(fp_outp, T"basic_proto proto_out;");
+                FILE_WRITELN(fp_outp, "");
+
+                /* generate unmarchalling codes */
+                for (int j = 0; j < procedure.params.size(); ++j) {
+                    FILE_WRITELN(fp_outp, T"%s", generate_svr_param_decl(procedure.params[j]).c_str());
+                }
+                FILE_WRITELN(fp_outp, "");
+                for (int j = 0; j < procedure.params.size(); ++j) {
+                    FILE_WRITELN(fp_outp, T"%s", generate_svr_param_unmarshalling(procedure.params[j]).c_str());
+                }
+                
+                /* callee */
+                char line[2048] = { 0 };
+                int offsize = 0;
+                if (procedure.rettype == "void") {
+                    offsize = sprintf(line, T"%s(", procedure.name.c_str());
+                } else {
+                    offsize = sprintf(line, T"%s ret_val = %s(", procedure.rettype.c_str(), procedure.name.c_str());
+                }
+                for (int j = 0; j < procedure.params.size(); ++j) {
+                    std::string param_str = generate_svr_param(procedure.params[j]);
+                    if (j > 0) {
+                        offsize += sprintf(line + offsize, ", ");
+                    }
+                    offsize += sprintf(line + offsize, "%s", param_str.c_str());
+                }
+                offsize += sprintf(line + offsize, ");");
+                FILE_WRITELN(fp_outp, "%s", line);
+
+                /* generate marchalling codes */
+                for (int j = 0; j < procedure.params.size(); ++j) {
+                    FILE_WRITELN(fp_outp, T"%s", generate_svr_param_marshalling(procedure.params[j]).c_str());
+                }
+                if (procedure.rettype != "void") {
+                    FILE_WRITELN(fp_outp, "");
+                    FILE_WRITELN(fp_outp, T"proto_out.add_%s(ret_val);", procedure.rettype.c_str());
+                }
+                FILE_WRITELN(fp_outp, "");
+
+                FILE_WRITELN(fp_outp, T"rsp_head = gen_http_head(\"200 OK\", bpout.get_buf_len())");
+                FILE_WRITELN(fp_outp, T"rsp_body.assign(bpout.get_buf(), bpout.get_buf_len())");
+                FILE_WRITELN(fp_outp, "}\n");
+            }
+        } 
+        /* output template contents */
+        else {
+            std::string str_line = replace(line, "$id$", num_to_str(program.id));
+            str_line = replace(str_line, "$name$", program.name);
+            str_line = replace(str_line, "$version$", program.version);
+            FILE_WRITE(fp_outp, "%s", str_line.c_str());
+        }
+    }
+    fclose(fp_outp);
+    fclose(fp_tmpl);
 }
 
 void init(const char *xml_filename, program_t &program) {
@@ -344,9 +473,9 @@ int main(int argc, char *argv[]) {
     program_t program;
     init("conf/idl.xml", program);
 
-    generate_common_head(program, "test.h");
+    //generate_common_head(program, "test.h");
     //generate_client_stub(argv[1], "test.cpp");
-    //generate_server_stub(argv[1], "test_svr.cpp");
+    generate_server_stub(program, "conf/svr.cpp.tmpl", "test_svr.cpp");
 
     exit(0);
 }

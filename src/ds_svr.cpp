@@ -236,7 +236,6 @@ void ds_svr::do_register(svr_inst_t &svr) {
     /* insert server into the hash */
     char key[1024] = { 0 };
     sprintf(key, "%d::%s", svr.id, svr.version.c_str());
-    printf("%s\n", key);
 
     m_lock.lock();
     if (0 == m_svc_map.count(key)) {
