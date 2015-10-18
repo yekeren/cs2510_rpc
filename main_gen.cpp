@@ -175,8 +175,14 @@ static void gen_req_rsp(FILE *fp, const char *name){
     file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
 }
 
-static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params){
+static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params, std::string ip, short port, int id, std::string version){
     file_writeln(fp, " { \n");
+    /* request server */
+    file_writeln(fp, std::string("svr_inst_t svr_inst;"));
+    std::string ip_str;
+    std::string ss = std::string("int ret_val = get_and_verify_svr(") + "\"" + ip + "\"" + ", " + num_to_str((int)port) + ", " + num_to_str(id) + ", " + "\"" + version + "\"" + ", " + "svr_inst);";
+    file_writeln(fp, ss);
+    file_writeln(fp, std::string("RPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst,port);");
     file_writeln(fp, "basic_proto inpro;");
     std::string nameStr = name;
     for (int i = 0; i < params.size(); ++i){
@@ -310,10 +316,6 @@ static void generate_client_stub(const program_t &program,
     
     file_writeln(fp, "#include \"test.h\"");
     file_writeln(fp, "");
-    /* request server */
-    file_writeln(fp, std::string("svr_inst_t svr_inst;"));
-    //file_writeln(fp, std::string("int ret_val = get_and_verify_svr(") + program.ds_ip +", " + program.ds_port + ", " + program.id +", " + program.version + ", " + "svr_inst);");
-    file_writeln(fp, std::string("RPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst,port);");
     /* generate procudures */
     for (int i = 0; i < program.procedures.size(); ++i){
         const procedure_t &procedure = program.procedures[i];
@@ -333,7 +335,7 @@ static void generate_client_stub(const program_t &program,
         }
         offsize += sprintf(line + offsize, ")");
         file_write(fp, line);
-        generate_client_content_stub(fp, name, ret_type, procedure.params);
+        generate_client_content_stub(fp, name, ret_type, procedure.params, program.ds_ip, program.ds_port, program.id, program.version);
     }
     fclose(fp);
 }
@@ -556,11 +558,11 @@ int main(int argc, char *argv[]) {
     init("conf/idl.xml", program);
 
     generate_common_head(program, "test.h");
-    //generate_client_stub(program, "test.cpp");
-    gen_svr_stub_h(program, "conf/svr.tmpl.h", "test_svr.h");
-    gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", "test_svr.cpp");
-    gen_svr_callee(program, "test.cpp");
-    gen_svr_main(program, "conf/main_svr.tmpl.cpp", "test_main.cpp");
+    generate_client_stub(program, "test.cpp");
+    //gen_svr_stub_h(program, "conf/svr.tmpl.h", "test_svr.h");
+    //gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", "test_svr.cpp");
+    //gen_svr_callee(program, "test.cpp");
+    //gen_svr_main(program, "conf/main_svr.tmpl.cpp", "test_main.cpp");
 
     exit(0);
 }
