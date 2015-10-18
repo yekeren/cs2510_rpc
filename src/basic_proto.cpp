@@ -32,6 +32,40 @@ int basic_proto::read_int(int &retval){
     return 0;
 }
 
+void basic_proto::add_float(float retval){
+    while (m_encoded_len + sizeof(retval) > m_buf.size()){
+        m_buf.resize(m_buf.size()*2);
+    }
+    *(int*) (m_buf.data() + m_encoded_len) = retval;
+    m_encoded_len += sizeof(float);
+}
+
+int basic_proto::read_float(float &retval){
+    if ((m_encoded_len + sizeof(float)) > m_buf.size()){
+        return -1;
+    }
+    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
+    m_encoded_len += sizeof(float);
+    return 0;
+}
+void basic_proto::add_double(double retval){
+    while (m_encoded_len + sizeof(retval) > m_buf.size()){
+        m_buf.resize(m_buf.size()*2);
+    }
+    *(int*) (m_buf.data() + m_encoded_len) = retval;
+    m_encoded_len += sizeof(double);
+}
+
+int basic_proto::read_double(double &retval){
+    if ((m_encoded_len + sizeof(double)) > m_buf.size()){
+        return -1;
+    }
+    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
+    m_encoded_len += sizeof(double);
+    return 0;
+}
+
+
 int basic_proto::read_binary(int bin_len, char* &bin){
     if((m_encoded_len + bin_len) > m_buf.size()){
         return -1;

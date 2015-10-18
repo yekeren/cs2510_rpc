@@ -41,13 +41,13 @@ static void usage(int argc, char *argv[]) {
 }
 
 static void file_writeln(FILE *fp, const std::string &line) {
-    puts((line).c_str());
-    //fputs((line + "\n").c_str(), fp);
+    //puts((line).c_str());
+    fputs((line + "\n").c_str(), fp);
 }
 
 static void file_write(FILE *fp, const std::string &line) {
-    //fprintf(fp, "%s", (line).c_str());
-    fprintf(stdout, "%s", (line).c_str());
+    fprintf(fp, "%s", (line).c_str());
+    //fprintf(stdout, "%s", (line).c_str());
 }
 
 static std::string generate_param(const param_t &param) {
@@ -84,53 +84,76 @@ static void generate_client_content_stub(FILE *fp, const char *name, const char 
     file_writeln(fp, " { \n");
     file_writeln(fp, "basic_proto inpro;");
     std::string nameStr = name;
-    if (nameStr == "multiply"){
-        for (int i = 0; i < params.size(); ++i) {
-            param_t &param = params[i];
+    for (int i = 0; i < params.size(); ++i){
+        param_t &param = params[i];
+        if (param.type == "Matrix"){
             file_write(fp, std::string("inpro.add_matrix("));
             file_write(fp, param.name + ", " + param.name + "_row," + param.name + "_col");
             file_writeln(fp,std::string(");"));
         }
-        gen_req_rsp(fp, nameStr.c_str());
-        for (int i = 0; i < params.size(); ++i){
-            param_t &param = params[i];
+        else if (param.type == "Array"){
+            file_write(fp, std::string("inpro.add_array("));
+            file_writeln(fp, param.name + ", " + param.name + "_len);");
+        }
+        else if (param.type == "int"){
+            file_write(fp, std::string("inpro.add_int("));
+            file_writeln(fp, param.name + ");");
+        }
+        else if (param.type == "double"){
+            file_write(fp, std::string("inpro.add_double("));
+            file_writeln(fp, param.name + ");");
+        }
+        else if (param.type == "float"){
+            file_write(fp, std::string("inpro.add_float("));
+            file_writeln(fp, param.name + ");");
+        }
+        else if (param.type == "char*"){
+            file_writeln(fp, std::string("std::string ") + param.name +"_str = " + param.name + ";");
+            file_writeln(fp, std::string("inpro.add_string(" + param.name +"_str" + ".size(), " + param.name +"_str" + ".data());"));
+        }
+    }
+    gen_req_rsp(fp, nameStr.c_str());
+    for (int i = 0; i < params.size(); ++i){
+        param_t &param = params[i];
+        if (param.type == "Matrix"){
             file_writeln(fp, std::string("int ") + "*" + param.name + "_bak;");
             file_writeln(fp, std::string("outpro.read_matrix(") + param.name + "_bak, " + param.name + "_row, " + param.name + "_col);");
-        }
-        for (int i = 0; i < params.size(); ++i){
-            param_t &param = params[i];
             file_writeln(fp, std::string("memcpy(") + param.name + ", " + param.name + "_bak, " + "sizeof(int) * " + param.name + "_row" + " * " + param.name + "_col);");
         }
-        file_writeln(fp, "return;");
+        else if (param.type == "Array"){
+            //file_writeln(fp, std::string("int retval;"));
+            file_writeln(fp, std::string("outpro.read_array(") + param.name + ", " + param.name + "_len);");
+            //file_writeln(fp, std::string("outpro.read_int(retval);"));
+            //file_writeln(fp, std::string("return retval;"));
+        }
+        else if (param.type == "int"){
+            file_writeln(fp, std::string("outpro.read_int(") + param.name + ");");
+        }
+        else if (param.type == "double"){
+            file_writeln(fp, std::string("outpro.read_double(") + param.name + ");");
+        }
+        else if (param.type == "float"){
+            file_writeln(fp, std::string("outpro.read_float(") + param.name + ");");
+        }
+        else if (param.type == "char*"){
+            file_writeln(fp, std::string("int ") + param.name + "_len;");
+            file_writeln(fp, std::string("outpro.read_string(") + param.name +"_len, " + param.name + ");");
+        }
     }
-    else if (nameStr == "max" || nameStr == "min"){
-        //printf("%d\n", params.size());
-        file_write(fp, std::string("inpro.add_array("));
-        file_writeln(fp, params[0].name + ", " + params[0].name + "_len);");
-        gen_req_rsp(fp, nameStr.c_str());
+    std::string return_type = ret_type;
+    if(return_type == "int"){
         file_writeln(fp, std::string("int retval;"));
-        file_writeln(fp, std::string("outpro.read_array(") + params[0].name + ", " + params[0].name + "_len);");
         file_writeln(fp, std::string("outpro.read_int(retval);"));
         file_writeln(fp, std::string("return retval;"));
-        
     }
-    else if (nameStr == "sort"){
-        file_write(fp, std::string("inpro.add_array("));
-        file_writeln(fp, params[0].name + ", " + params[0].name + "_len);");
-        gen_req_rsp(fp, nameStr.c_str());
-        file_writeln(fp, std::string("int *ret_array;"));
-        file_writeln(fp, std::string("outpro.read_array(ret_array,") + params[0].name + "_len);");
-        file_writeln(fp, std::string("return ret_array;"));
-        
+    else if(return_type == "double"){
+        file_writeln(fp, std::string("double retval;"));
+        file_writeln(fp, std::string("outpro.read_double(retval);"));
+        file_writeln(fp, std::string("return retval;"));
     }
-    else if (nameStr == "wc"){
-        file_writeln(fp, std::string("std::string str = ") + params[0].name + ";");
-        file_writeln(fp, std::string("inpro.add_string(str.size(), str.data());"));
-        gen_req_rsp(fp, nameStr.c_str());
-        file_writeln(fp, std::string("int str_len, retval;"));
-        file_writeln(fp, std::string("char *back_str;"));
-        file_writeln(fp, std::string("outpro.read_string(str_len, back_str);"));
-        file_writeln(fp, std::string("outpro.read_int(retval);"));
+    else if(return_type == "float"){
+        file_writeln(fp, std::string("float retval;"));
+        file_writeln(fp, std::string("outpro.read_float(retval);"));
         file_writeln(fp, std::string("return retval;"));
     }
     file_writeln(fp, "}\n");
@@ -184,36 +207,30 @@ static void generate_common_head(const program_t &program,
  * @param filename
  */
 
-static void generate_client_stub(const char *xml_filename,
-        const char *filename) {
-
+static void generate_client_stub(const program_t &program,
+                                 const char *filename) {
+    
     FILE *fp = fopen(filename, "w");
-    ezxml_t root = ezxml_parse_file(xml_filename);
-
+//    ezxml_t root = ezxml_parse_file(xml_filename);
+    
     file_writeln(fp, "#include \"test.h\"");
     file_writeln(fp, "");
-
+    /* request server */
+    file_writeln(fp, std::string("svr_inst_t svr_inst;"));
+    //file_writeln(fp, std::string("int ret_val = get_and_verify_svr(") + program.ds_ip +", " + program.ds_port + ", " + program.id +", " + program.version + ", " + "svr_inst);");
+    file_writeln(fp, std::string("RPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst,port);");
     /* generate procudures */
-    for (ezxml_t child = ezxml_child(root, "procedure"); child != NULL; child = child->next) {
-        const char *name = ezxml_child(child, "name")->txt;
-        const char *ret_type = ezxml_child(child, "return")->txt;
-
+    for (int i = 0; i < program.procedures.size(); ++i){
+        const procedure_t &procedure = program.procedures[i];
+        const int ID = procedure.id;
+        const char *name = procedure.name.c_str();
+        const char *ret_type = procedure.rettype.c_str();
         char line[2048] = { 0 };
         int offsize = sprintf(line, "%s %s(", ret_type, name);
-
-        std::vector<param_t> params;
-        for (ezxml_t sub_child = ezxml_child(child, "param"); sub_child != NULL; sub_child = sub_child->next) {
-            param_t param;
-            param.index = atoi(ezxml_child(sub_child, "index")->txt);
-            param.type = ezxml_child(sub_child, "type")->txt;
-            param.name = ezxml_child(sub_child, "name")->txt;
-            params.push_back(param);
-        }
-        std::sort(params.begin(), params.end(), comp_index);
-        for (int i = 0; i < params.size(); ++i) {
-            param_t &param = params[i];
+        for (int j = 0; j < procedure.params.size(); ++j){
+            const param_t &param = procedure.params[j];
             std::string param_str = generate_param(param);
-            if (i != params.size() - 1) {
+            if (j != procedure.params.size() - 1) {
                 offsize += sprintf(line + offsize, "%s, ", param_str.c_str());
             } else {
                 offsize += sprintf(line + offsize, "%s", param_str.c_str());
@@ -221,10 +238,8 @@ static void generate_client_stub(const char *xml_filename,
         }
         offsize += sprintf(line + offsize, ")");
         file_write(fp, line);
-        generate_client_content_stub(fp, name, ret_type, params);
+        generate_client_content_stub(fp, name, ret_type, procedure.params);
     }
-
-    ezxml_free(root);
     fclose(fp);
 }
 
@@ -345,7 +360,7 @@ int main(int argc, char *argv[]) {
     init("conf/idl.xml", program);
 
     generate_common_head(program, "test.h");
-    //generate_client_stub(argv[1], "test.cpp");
+    generate_client_stub(program, "test.cpp");
     //generate_server_stub(argv[1], "test_svr.cpp");
 
     exit(0);
