@@ -2,6 +2,7 @@
 #include "ezxml.h"
 #include "rpc_log.h"
 #include "rpc_http.h"
+#include "template.h"
 
 /**
  * @brief 
@@ -149,5 +150,15 @@ int get_and_verify_svr(const std::string &ip, unsigned short port,
             svr_inst.id, svr_inst.version.c_str(),
             svr_inst.ip.c_str(), svr_inst.port);
 
+    return 0;
+}
+
+int rpc_call_by_id(int proc_id, std::string svr_inst_ip, short svr_inst_port, basic_proto &inpro, std::string &rsp_head, std::string &rsp_body)
+{
+    std::string id_request;
+    sscanf(id_request.c_str(), "call_by_id?id=%d", proc_id);
+    std::string req_head = gen_http_head(id_request, svr_inst_ip, inpro.get_buf_len());
+    std::string req_body(inpro.get_buf(), inpro.get_buf_len());
+    http_talk(svr_inst_ip, svr_inst_port, req_head, req_body, rsp_head, rsp_body);
     return 0;
 }
