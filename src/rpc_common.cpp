@@ -159,6 +159,5 @@ int rpc_call_by_id(int proc_id, std::string svr_inst_ip, short svr_inst_port, ba
     sprintf(id_request, "call_by_id?id=%d", proc_id);
     std::string req_head = gen_http_head(id_request, svr_inst_ip, inpro.get_buf_len());
     std::string req_body(inpro.get_buf(), inpro.get_buf_len());
-    http_talk(svr_inst_ip, svr_inst_port, req_head, req_body, rsp_head, rsp_body);
-    return 0;
+    return http_talk(svr_inst_ip, svr_inst_port, req_head, req_body, rsp_head, rsp_body);
 }
