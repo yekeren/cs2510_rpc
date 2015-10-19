@@ -2,7 +2,8 @@
 #include <assert.h>
 #include <getopt.h>
 #include "rpc_log.h"
-#include "cs_svr.h"
+#include "$name$.h"
+#include "$name$_svr.h"
 
 static bool running = true;
 static void signal_proc(int signo) {
@@ -19,9 +20,6 @@ static void usage(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
     int port = 0;
     int threads_num = 4;
-    std::string ds_ip = "127.0.0.1";
-    int ds_port = 8000;
-
     /* command line options */
     while (true) {
         static struct option long_options[] = {
@@ -63,9 +61,9 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, signal_proc);
 
     /* initialize server */
-    cs_svr *svr = new cs_svr;
+    $name$_svr *svr = new $name$_svr;
     assert(0 == svr->register_service(
-                ds_ip, ds_port, "conf/cs.8001"));
+                DS_IP, DS_PORT, "conf/cs.8001"));
 
     assert(0 == svr->run(threads_num));
     assert(0 == svr->bind(port));
@@ -79,7 +77,7 @@ int main(int argc, char *argv[]) {
 
     /* delete */
     svr->unregister_service(
-            ds_ip, ds_port);
+            DS_IP, DS_PORT);
     delete svr;
 
     RPC_WARNING("server exit");

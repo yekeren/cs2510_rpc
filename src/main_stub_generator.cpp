@@ -115,7 +115,7 @@ static std::string gen_svr_param(const param_t &param) {
         sprintf(buf, "%s, %s_row, %s_col", param.name.c_str(), param.name.c_str(), param.name.c_str());
     } 
     else if (param.type == "Array" ) {
-        sprintf(buf, "%s_len, int *%s", param.name.c_str(), param.name.c_str());
+        sprintf(buf, "%s_len, %s", param.name.c_str(), param.name.c_str());
     } 
     else if (param.type == "String") {
         sprintf(buf, "%s, %s_len", param.name.c_str(), param.name.c_str());
@@ -404,13 +404,36 @@ static void gen_svr_callee(const program_t &program,
 }
 
 /**
+ * @brief generate server main
+ *
+ * @param xml_filename
+ * @param tmpl_filename
+ * @param filename
+ */
+static void gen_svr_main(const program_t &program,
+        const char *tmpl_filename, const char *filename) {
+    FILE *fp_tmpl = fopen(tmpl_filename, "r");
+    FILE *fp_outp = fopen(filename, "w");
+
+    char line[1024] = { 0 };
+    while (fgets(line, sizeof(line), fp_tmpl) != NULL) {
+        /* output template contents */
+        std::string str_line = replace(line, "$id$", num_to_str(program.id));
+        str_line = replace(str_line, "$name$", program.name);
+        str_line = replace(str_line, "$version$", program.version);
+        FILE_WRITE(fp_outp, "%s", str_line.c_str());
+    }
+    fclose(fp_outp);
+    fclose(fp_tmpl);
+}
+
+/**
  * @brief generate server stub
  *
  * @param xml_filename
  * @param tmpl_filename
  * @param filename
  */
-
 static void gen_svr_stub_h(const program_t &program,
         const char *tmpl_filename, const char *filename) {
 
@@ -516,8 +539,8 @@ static void gen_svr_stub_cpp(const program_t &program,
                 }
                 FILE_WRITELN(fp_outp, "");
 
-                FILE_WRITELN(fp_outp, T"rsp_head = gen_http_head(\"200 OK\", bpout.get_buf_len())");
-                FILE_WRITELN(fp_outp, T"rsp_body.assign(bpout.get_buf(), bpout.get_buf_len())");
+                FILE_WRITELN(fp_outp, T"rsp_head = gen_http_head(\"200 OK\", proto_out.get_buf_len());");
+                FILE_WRITELN(fp_outp, T"rsp_body.assign(proto_out.get_buf(), proto_out.get_buf_len());");
                 FILE_WRITELN(fp_outp, "}\n");
             }
         } 
@@ -621,11 +644,15 @@ int main(int argc, char *argv[]) {
         generate_common_head(program, std::string(prefix + ".h").c_str());
         generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
     }
-
-    //gen_svr_stub_h(program, "conf/svr.tmpl.h", "test_svr.h");
-    //gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", "test_svr.cpp");
-    //gen_svr_callee(program, "test.cpp");
-    //gen_svr_main(program, "conf/main_svr.tmpl.cpp", "test_main.cpp");
+    else if (strcmp(target, "server_stub") == 0){
+        std::string prefix(path);
+        prefix += "/" + program.name;
+        generate_common_head(program, std::string(prefix + ".h").c_str());
+        gen_svr_stub_h(program, "conf/svr.tmpl.h", std::string(prefix + "_svr.h").c_str());
+        gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", std::string(prefix + "_svr.cpp").c_str());
+        gen_svr_callee(program, std::string(prefix + "_svr_callee.cpp").c_str());
+        gen_svr_main(program, "conf/main_svr.tmpl.cpp", (std::string(path) + "/main_" + program.name + "_svr.cpp").c_str());
+    }
 
     exit(0);
 }

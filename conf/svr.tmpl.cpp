@@ -1,3 +1,4 @@
+#include "$name$.h"
 #include "$name$_svr.h"
 #include <string.h>
 #include "template.h"
@@ -61,7 +62,7 @@ void $name$_event::do_get_svr_id(const std::string &req_body,
         std::string &rsp_head, std::string &rsp_body) {
 
     ezxml_t root = ezxml_new("server");
-    ezxml_set_txt(ezxml_add_child(root, "id", 0), num_to_str(RPC_ID));
+    ezxml_set_txt(ezxml_add_child(root, "id", 0), num_to_str(RPC_ID).c_str());
     ezxml_set_txt(ezxml_add_child(root, "name", 0), RPC_NAME);
     ezxml_set_txt(ezxml_add_child(root, "version", 0), RPC_VERSION);
 
