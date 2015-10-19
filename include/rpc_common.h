@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include "basic_proto.h"
 
 #define RPC_CONN_TIMEOUT 5000
 #define RPC_RECV_TIMEOUT 5000
@@ -66,5 +67,8 @@ int get_svr_id(const std::string &ip, unsigned short port,
  */
 int get_and_verify_svr(const std::string &ip, unsigned short port, 
         int id, const std::string &version, svr_inst_t &svr_inst);
+
+int rpc_call_by_id(int proc_id, std::string svr_inst_ip, short svr_inst_port, basic_proto &inpro, std::string &rsp_head, std::string &rsp_body);
+
 
 #endif
