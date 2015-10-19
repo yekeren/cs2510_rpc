@@ -184,7 +184,6 @@ static void gen_req_rsp(FILE *fp, const int id){
 }
 
 static void generate_client_content_stub(FILE *fp, const int id, const char *name, const char *ret_type, std::vector<param_t> params){
-static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params){
     file_writeln(fp, " { \n");
     /* request server */
     file_writeln(fp, std::string("svr_inst_t svr_inst;"));
