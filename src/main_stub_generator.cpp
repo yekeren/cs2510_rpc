@@ -9,6 +9,7 @@
 #define T "    "
 #define TT "        "
 #define TTT "            "
+#define TTTT "                "
 
 /**
  * $id$
@@ -461,7 +462,7 @@ static void gen_svr_stub_h(const program_t &program,
     fclose(fp_tmpl);
 }
 
-static void generate_client_stub_makefile(const program_t &program, const char *tmpl_filename, const char *filename){
+static void generate_stub_makefile(const program_t &program, const char *tmpl_filename, const char *filename){
     FILE *fp_tmpl = fopen(tmpl_filename, "r");
     FILE *fp_outp = fopen(filename, "w");
     char line[2048] = {0};
@@ -493,13 +494,9 @@ static void gen_svr_stub_cpp(const program_t &program,
         if (strstr(line, "$dispatch$")) {
             for (int i = 0; i < program.procedures.size(); ++i) {
                 const procedure_t &procedure = program.procedures[i];
-                if (i == 0) {
-                    FILE_WRITELN(fp_outp, TT"if (uri.find(\"/%s\") == 0) {", procedure.name.c_str());
-                } else {
-                    FILE_WRITELN(fp_outp, TT"else if (uri.find(\"/%s\") == 0) {", procedure.name.c_str());
-                }
-                FILE_WRITELN(fp_outp, TTT"process_%s(req_body, rsp_head, rsp_body);", procedure.name.c_str());
-                FILE_WRITELN(fp_outp, TT"}");
+                FILE_WRITELN(fp_outp, TTT"case id_%s:", procedure.name.c_str());
+                FILE_WRITELN(fp_outp, TTTT"process_%s(req_body, rsp_head, rsp_body);", procedure.name.c_str());
+                FILE_WRITELN(fp_outp, TTTT"break;");
             }
         } 
         /* generate server stub */
@@ -657,16 +654,19 @@ int main(int argc, char *argv[]) {
         prefix += "/" + program.name;
         generate_common_head(program, std::string(prefix + ".h").c_str());
         generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
-        generate_client_stub_makefile(program, "conf/Make.tmpl", mkf_path.c_str());
+        generate_stub_makefile(program, "conf/Make.tmpl", mkf_path.c_str());
     }
     else if (strcmp(target, "server_stub") == 0){
         std::string prefix(path);
+        std::string mkf_path(path);
+        mkf_path += "/Makefile";
         prefix += "/" + program.name;
         generate_common_head(program, std::string(prefix + ".h").c_str());
         gen_svr_stub_h(program, "conf/svr.tmpl.h", std::string(prefix + "_svr.h").c_str());
         gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", std::string(prefix + "_svr.cpp").c_str());
         gen_svr_callee(program, std::string(prefix + "_svr_callee.cpp").c_str());
         gen_svr_main(program, "conf/main_svr.tmpl.cpp", (std::string(path) + "/main_" + program.name + "_svr.cpp").c_str());
+        generate_stub_makefile(program, "conf/make_svr.tmpl", mkf_path.c_str());
     }
 
     exit(0);
