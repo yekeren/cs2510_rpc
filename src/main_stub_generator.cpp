@@ -171,15 +171,19 @@ static bool comp_index(const param_t &a, const param_t &b) {
  * @param filename
  */
 
-static void gen_req_rsp(FILE *fp, const char *name){
-    std::string nameStr = name;
-    file_writeln(fp, std::string("std::string req_head = gen_http_head(") + "\"" + "/" + nameStr + "\"" + ", svr_inst.ip, inpro.get_buf_len());");
-    file_writeln(fp, std::string("std::string req_body(inpro.get_buf(), inpro.get_buf_len());"));
+static void gen_req_rsp(FILE *fp, const int id){
     file_writeln(fp, std::string("std::string rsp_head, rsp_body;"));
-    file_writeln(fp, std::string("http_talk(svr_inst.ip, svr_inst.port, req_head, req_body, rsp_head, rsp_body);"));
+    file_writeln(fp, std::string("rpc_call_by_id(") + num_to_str(id) + ", " + "svr_inst.ip" + ", " + "svr_inst.port, " + "inpro, " + "rsp_head, " + "rsp_body);");
     file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
+    //std::string nameStr = name;
+    //file_writeln(fp, std::string("std::string req_head = gen_http_head(") + "\"" + "/" + nameStr + "\"" + ", svr_inst.ip, inpro.get_buf_len());");
+    //file_writeln(fp, std::string("std::string req_body(inpro.get_buf(), inpro.get_buf_len());"));
+    //file_writeln(fp, std::string("std::string rsp_head, rsp_body;"));
+    //file_writeln(fp, std::string("http_talk(svr_inst.ip, svr_inst.port, req_head, req_body, rsp_head, rsp_body);"));
+    //file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
 }
 
+static void generate_client_content_stub(FILE *fp, const int id, const char *name, const char *ret_type, std::vector<param_t> params){
 static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params){
     file_writeln(fp, " { \n");
     /* request server */
@@ -218,7 +222,7 @@ static void generate_client_content_stub(FILE *fp, const char *name, const char 
             file_writeln(fp, std::string("inpro.add_string(" + param.name +"_str" + ".size(), " + param.name +"_str" + ".data());"));
         }
     }
-    gen_req_rsp(fp, nameStr.c_str());
+    gen_req_rsp(fp, id);
     for (int i = 0; i < params.size(); ++i){
         param_t &param = params[i];
         if (param.type == "Matrix"){
@@ -350,7 +354,7 @@ static void generate_client_stub(const program_t &program,
         }
         offsize += sprintf(line + offsize, ")");
         file_write(fp, line);
-        generate_client_content_stub(fp, name, ret_type, procedure.params);
+        generate_client_content_stub(fp, ID, name, ret_type, procedure.params);
     }
     fclose(fp);
 }
