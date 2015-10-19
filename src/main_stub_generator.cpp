@@ -324,7 +324,7 @@ static void generate_client_stub(const program_t &program,
     FILE *fp = fopen(filename, "w");
 //    ezxml_t root = ezxml_parse_file(xml_filename);
     
-    file_writeln(fp, "#include \"test.h\"");
+    file_writeln(fp, std::string("#include \"") + program.name + ".h\"");
     file_writeln(fp, "#include <assert.h>");
     file_writeln(fp, "#include <stdlib.h>");
     file_writeln(fp, "#include <stdio.h>");
@@ -655,8 +655,8 @@ int main(int argc, char *argv[]) {
         std::string mkf_path(path);
         mkf_path += "/Makefile";
         prefix += "/" + program.name;
-        //generate_common_head(program, std::string(prefix + ".h").c_str());
-        //generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
+        generate_common_head(program, std::string(prefix + ".h").c_str());
+        generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
         generate_client_stub_makefile(program, "conf/Make.tmpl", mkf_path.c_str());
     }
     else if (strcmp(target, "server_stub") == 0){
