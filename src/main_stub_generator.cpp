@@ -438,6 +438,18 @@ static void gen_svr_stub_h(const program_t &program,
     fclose(fp_tmpl);
 }
 
+static void generate_client_stub_makefile(const program_t &program, const char *tmpl_filename, const char *filename){
+    FILE *fp_tmpl = fopen(tmpl_filename, "r");
+    FILE *fp_outp = fopen(filename, "w");
+    char line[2048] = {0};
+    while(fgets(line, sizeof(line), fp_tmpl) !=NULL){
+        std::string str_line = replace(line, "$name$", program.name);
+        FILE_WRITE(fp_outp, "%s", str_line.c_str());
+    }
+    fclose(fp_outp);
+    fclose(fp_tmpl);
+}
+
 /**
  * @brief generate server stub
  *
@@ -617,9 +629,12 @@ int main(int argc, char *argv[]) {
 
     if (strcmp(target, "client_stub") == 0) {
         std::string prefix(path);
+        std::string mkf_path(path);
+        mkf_path += "/Makefile";
         prefix += "/" + program.name;
-        generate_common_head(program, std::string(prefix + ".h").c_str());
-        generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
+        //generate_common_head(program, std::string(prefix + ".h").c_str());
+        //generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
+        generate_client_stub_makefile(program, "conf/Make.tmpl", mkf_path.c_str());
     }
 
     //gen_svr_stub_h(program, "conf/svr.tmpl.h", "test_svr.h");
