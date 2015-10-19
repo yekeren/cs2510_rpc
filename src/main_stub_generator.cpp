@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <getopt.h>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -49,7 +50,11 @@ static std::string num_to_str(int num) {
 }
 
 static void usage(int argc, char *argv[]) {
-    printf("Usage: %s idl_filename output_filename\n", argv[0]);
+    printf("Usage: %s [options]\n", argv[0]);
+    printf("-h/--help:      show this help\n");
+    printf("-x/--xml:       specify the idl xml file\n");
+    printf("-t/--target:    specify the target, can be client_stub|server_stub\n");
+    printf("-p/--path:      path for saving files\n");
 }
 
 #define FILE_WRITELN(fp, format, args...) \
@@ -175,14 +180,14 @@ static void gen_req_rsp(FILE *fp, const char *name){
     file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
 }
 
-static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params, std::string ip, short port, int id, std::string version){
+static void generate_client_content_stub(FILE *fp, const char *name, const char *ret_type, std::vector<param_t> params){
     file_writeln(fp, " { \n");
     /* request server */
     file_writeln(fp, std::string("svr_inst_t svr_inst;"));
     std::string ip_str;
-    std::string ss = std::string("int ret_val = get_and_verify_svr(") + "\"" + ip + "\"" + ", " + num_to_str((int)port) + ", " + num_to_str(id) + ", " + "\"" + version + "\"" + ", " + "svr_inst);";
+    std::string ss = std::string("int ret_val = get_and_verify_svr(DS_IP, DS_PORT, RPC_ID, RPC_VERSION, svr_inst);");
     file_writeln(fp, ss);
-    file_writeln(fp, std::string("RPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst,port);");
+    file_writeln(fp, std::string("RPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u\"" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst.port);");
     file_writeln(fp, "basic_proto inpro;");
     std::string nameStr = name;
     for (int i = 0; i < params.size(); ++i){
@@ -265,14 +270,16 @@ static void generate_common_head(const program_t &program,
 
     FILE *fp = fopen(filename, "w");
 
-    file_writeln(fp, "#ifndef __RPC_COMMON_H__");
-    file_writeln(fp, "#define __RPC_COMMON_H__");
+    file_writeln(fp, std::string("#ifndef __" + program.name + "_h__"));
+    file_writeln(fp, std::string("#define __" + program.name + "_h__"));
 
     /* generate macros */
     file_writeln(fp, "");
     file_writeln(fp, std::string("#define RPC_ID ") + num_to_str(program.id));
     file_writeln(fp, std::string("#define RPC_NAME \"") + program.name + "\"");
     file_writeln(fp, std::string("#define RPC_VERSION \"") + program.version + "\"");
+    file_writeln(fp, std::string("#define DS_IP \"") + program.ds_ip + "\"");
+    file_writeln(fp, std::string("#define DS_PORT ") + num_to_str(program.ds_port));
     file_writeln(fp, "");
 
     /* generate procudures */
@@ -315,6 +322,14 @@ static void generate_client_stub(const program_t &program,
 //    ezxml_t root = ezxml_parse_file(xml_filename);
     
     file_writeln(fp, "#include \"test.h\"");
+    file_writeln(fp, "#include <assert.h>");
+    file_writeln(fp, "#include <stdlib.h>");
+    file_writeln(fp, "#include <stdio.h>");
+    file_writeln(fp, "#include \"rpc_log.h\"");
+    file_writeln(fp, "#include \"rpc_http.h\"");
+    file_writeln(fp, "#include \"basic_proto.h\"");
+    file_writeln(fp, "#include \"template.h\"");
+    file_writeln(fp, "#include \"rpc_common.h\"");
     file_writeln(fp, "");
     /* generate procudures */
     for (int i = 0; i < program.procedures.size(); ++i){
@@ -335,7 +350,7 @@ static void generate_client_stub(const program_t &program,
         }
         offsize += sprintf(line + offsize, ")");
         file_write(fp, line);
-        generate_client_content_stub(fp, name, ret_type, procedure.params, program.ds_ip, program.ds_port, program.id, program.version);
+        generate_client_content_stub(fp, name, ret_type, procedure.params);
     }
     fclose(fp);
 }
@@ -549,16 +564,61 @@ void init(const char *xml_filename, program_t &program) {
 }
 
 int main(int argc, char *argv[]) {
-    if (2 != argc) {
+    /* command line options */
+    const char *target = NULL;
+    const char *path = NULL;
+    const char *xml_file = NULL;
+    while (true) {
+        static struct option long_options[] = {
+            { "help", no_argument, 0, 'h'},
+            { "target", required_argument, 0, 't'},
+            { "path", required_argument, 0, 'p'},
+            { "xml", required_argument, 0, 'x'},
+            { 0, 0, 0, 0 }
+        };
+        int option_index = 0;
+        int c = getopt_long(argc, argv, "ht:p:x:", long_options, &option_index);
+        if (-1 == c) {
+            break;
+        }
+        switch (c) {
+            case 'h':
+                usage(argc, argv);
+                exit(0);
+            case 't':
+                target = optarg;
+                break;
+            case 'p':
+                path = optarg;
+                break;
+            case 'x':
+                xml_file = optarg;
+                break;
+            default:
+                usage(argc, argv);
+                exit(0);
+        }
+    }
+
+    if (!target || !path || !xml_file) {
+        usage(argc, argv);
+        exit(0);
+    }
+    if (strcmp(target, "client_stub") != 0 && strcmp(target, "server_stub") != 0) {
         usage(argc, argv);
         exit(0);
     }
 
     program_t program;
-    init("conf/idl.xml", program);
+    init(xml_file, program);
 
-    generate_common_head(program, "test.h");
-    generate_client_stub(program, "test.cpp");
+    if (strcmp(target, "client_stub") == 0) {
+        std::string prefix(path);
+        prefix += "/" + program.name;
+        generate_common_head(program, std::string(prefix + ".h").c_str());
+        generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
+    }
+
     //gen_svr_stub_h(program, "conf/svr.tmpl.h", "test_svr.h");
     //gen_svr_stub_cpp(program, "conf/svr.tmpl.cpp", "test_svr.cpp");
     //gen_svr_callee(program, "test.cpp");

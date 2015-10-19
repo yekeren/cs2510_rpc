@@ -1,16 +1,19 @@
 INCLUDE='./include'
 
+IDLFILE=conf/idl.xml
+
 CXX=g++
 CXXFLAGS=-g -I$(INCLUDE)
 CC=gcc
 CFLAGS=-g -I$(INCLUDE)
 
-CLI_LIB=rpc_cli
 SVR_CS=svr_cs
-STUB_GEN=stub_gen
 
 COMMON_LIB=common_lib.a
 DIRECTORY_SERVER=directory_server
+STUB_GENERATOR=stub_generator
+CLIENT_STUB=client_stub_lib.a
+SERVER_STUB=server_stub
 
 cchighlight=\033[0;31m
 ccend=\033[0m
@@ -50,11 +53,15 @@ COMMON_LIB_OBJS= \
 	src/template.o
 
 DIRECTORY_SERVER_OBJS= \
-	main_svr_ds.o \
-	src/ds_svr.o
+	src/ds_svr.o \
+	src/main_ds_svr.o
+
+STUB_GENERATOR_OBJS= \
+	src/ezxml.o \
+	src/main_stub_generator.o
 
 # compiling all
-all: $(COMMON_LIB) $(DIRECTORY_SERVER)
+all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # compiling common_lib
@@ -67,55 +74,36 @@ $(COMMON_LIB): $(COMMON_LIB_OBJS)
 	@echo -e "$(cchighlight)successfully compiling $(COMMON_LIB)$(ccend)"
 
 # compiling directory_server
-$(DIRECTORY_SERVER): $(DIRECTORY_SERVER_OBJS) $(COMMON_LIB)
+$(DIRECTORY_SERVER): $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS)
 	mkdir -p output/bin
 	$(CXX) $(CXXFLAGS) -lpthread -o $(DIRECTORY_SERVER) -Xlinker $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS)
 	cp $(DIRECTORY_SERVER) output/bin
 	@echo -e "$(cchighlight)successfully compiling $(DIRECTORY_SERVER)$(ccend)"
 
-# object files needed in cs
-CS_OBJS=main_svr_cs.o \
-	src/svr_base.o \
-	src/svr_thrd.o \
-	src/rpc_net.o \
-	src/rpc_http.o \
-	src/io_event.o \
-	src/accept_event.o \
-	src/http_event.o \
-	src/ezxml.o \
-	src/cs_svr.o \
-	src/basic_proto.o \
-	src/template.o
+# compiling stub_generator
+$(STUB_GENERATOR): $(STUB_GENERATOR_OBJS)
+	mkdir -p output/bin
+	$(CXX) $(CXXFLAGS) -o $(STUB_GENERATOR) $(STUB_GENERATOR_OBJS)
+	cp $(STUB_GENERATOR) output/bin
+	@echo -e "$(cchighlight)successfully compiling $(STUB_GENERATOR)$(ccend)"
 
-CLI_OBJS=main_cli.o \
-	src/multiply_stub_cli.o \
-	src/rpc_net.o \
-	src/rpc_http.o \
-	src/rpc_common.o \
-	src/ezxml.o \
-	src/basic_proto.o \
-	src/template.o
-
-STUB_OBJS=main_gen.o \
-	src/ezxml.o
-
-$(STUB_GEN): $(STUB_OBJS)
-	$(CXX) $(CXXFLAGS) -lpthread -o $(STUB_GEN) $(STUB_OBJS)
-
-# making the cli_lib
-$(CLI_LIB): $(CLI_OBJS)
-	$(CXX) $(CXXFLAGS) -lpthread -o $(CLI_LIB) $(CLI_OBJS)
-
-# compiling svr_cs
-$(SVR_CS): $(CS_OBJS) 
-	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR_CS) $(CS_OBJS)
+# generating client_stub
+$(CLIENT_STUB): $(STUB_GENERATOR)
+	mkdir -p output/client_stub/include
+	mkdir -p output/client_stub/src
+	mkdir -p output/client_stub/lib
+	./$(STUB_GENERATOR) -x $(IDLFILE) -t client_stub -p output/client_stub
+	mv output/client_stub/*.h output/client_stub/include
+	mv output/client_stub/*.cpp output/client_stub/src
+	@echo -e "$(cchighlight)successfully generating $(CLIENT_STUB)$(ccend)"
 
 .PHONY: clean
 clean:
 	rm -f src/*.o
 	rm -f *.o
+	rm -f $(COMMON_LIB)
 	rm -f $(DIRECTORY_SERVER)
-	rm -f $(SVR_CS)
-	rm -f $(CLI_LIB)
-	rm -f $(STUB_GEN)
+	rm -f $(STUB_GENERATOR)
+	rm -f $(CLIENT_STUB)
+	rm -f $(SERVER_STUB)
 	rm -rf output
