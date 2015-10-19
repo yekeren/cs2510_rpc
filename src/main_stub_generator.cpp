@@ -172,9 +172,9 @@ static bool comp_index(const param_t &a, const param_t &b) {
  * @param filename
  */
 
-static void gen_req_rsp(FILE *fp, const int id){
+static void gen_req_rsp(FILE *fp, std::string proc_name){
     file_writeln(fp, std::string("std::string rsp_head, rsp_body;"));
-    file_writeln(fp, std::string("rpc_call_by_id(") + num_to_str(id) + ", " + "svr_inst.ip" + ", " + "svr_inst.port, " + "inpro, " + "rsp_head, " + "rsp_body);");
+    file_writeln(fp, std::string("rpc_call_by_id(") + "ID_" + proc_name + ", " + "svr_inst.ip" + ", " + "svr_inst.port, " + "inpro, " + "rsp_head, " + "rsp_body);");
     file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
     //std::string nameStr = name;
     //file_writeln(fp, std::string("std::string req_head = gen_http_head(") + "\"" + "/" + nameStr + "\"" + ", svr_inst.ip, inpro.get_buf_len());");
@@ -184,7 +184,7 @@ static void gen_req_rsp(FILE *fp, const int id){
     //file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
 }
 
-static void generate_client_content_stub(FILE *fp, const int id, const char *name, const char *ret_type, std::vector<param_t> params){
+static void generate_client_content_stub(FILE *fp, std::string proc_name, const char *name, const char *ret_type, std::vector<param_t> params){
     file_writeln(fp, " { \n");
     /* request server */
     file_writeln(fp, std::string("svr_inst_t svr_inst;"));
@@ -222,7 +222,7 @@ static void generate_client_content_stub(FILE *fp, const int id, const char *nam
             file_writeln(fp, std::string("inpro.add_string(" + param.name +"_str" + ".size(), " + param.name +"_str" + ".data());"));
         }
     }
-    gen_req_rsp(fp, id);
+    gen_req_rsp(fp, proc_name);
     for (int i = 0; i < params.size(); ++i){
         param_t &param = params[i];
         if (param.type == "Matrix"){
@@ -284,6 +284,12 @@ static void generate_common_head(const program_t &program,
     file_writeln(fp, std::string("#define RPC_VERSION \"") + program.version + "\"");
     file_writeln(fp, std::string("#define DS_IP \"") + program.ds_ip + "\"");
     file_writeln(fp, std::string("#define DS_PORT ") + num_to_str(program.ds_port));
+    file_writeln(fp, std::string("#define ID_add 1"));
+    file_writeln(fp, std::string("#define ID_multiply 2"));
+    file_writeln(fp, std::string("#define ID_max 3"));
+    file_writeln(fp, std::string("#define ID_min 4"));
+    file_writeln(fp, std::string("#define ID_sort 5"));
+    file_writeln(fp, std::string("#define ID_wc 6"));
     file_writeln(fp, "");
 
     /* generate procudures */
@@ -354,7 +360,7 @@ static void generate_client_stub(const program_t &program,
         }
         offsize += sprintf(line + offsize, ")");
         file_write(fp, line);
-        generate_client_content_stub(fp, ID, name, ret_type, procedure.params);
+        generate_client_content_stub(fp, procedure.name, name, ret_type, procedure.params);
     }
     fclose(fp);
 }
