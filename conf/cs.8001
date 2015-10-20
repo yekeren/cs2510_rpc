@@ -1,7 +1,0 @@
-<server>
-<id>1</id>
-<name>comp_svr</name>
-<version>1.0.0</version>
-<ip>127.0.0.1</ip>
-<port>8001</port>
-</server>

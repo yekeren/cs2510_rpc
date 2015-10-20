@@ -1,6 +1,7 @@
 <program>
     <directory_server_ip>127.0.0.1</directory_server_ip>
-    <directory_server_port>80</directory_server_port>
+    <directory_server_port>8000</directory_server_port>
+
     <id>2342134</id>
     <name>cs</name>
     <version>1.0.0</version>
@@ -55,7 +56,7 @@
 
     <procedure>
         <name>wc</name>
-        <id>2</id>
+        <id>1</id>
         <return>int</return>
         <param>
             <name>str</name>

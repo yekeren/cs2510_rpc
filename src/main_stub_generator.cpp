@@ -174,7 +174,7 @@ static bool comp_index(const param_t &a, const param_t &b) {
 
 static void gen_req_rsp(FILE *fp, std::string proc_name){
     file_writeln(fp, std::string("std::string rsp_head, rsp_body;"));
-    file_writeln(fp, std::string("rpc_call_by_id(") + "ID_" + proc_name + ", " + "svr_inst.ip" + ", " + "svr_inst.port, " + "inpro, " + "rsp_head, " + "rsp_body);");
+    file_writeln(fp, std::string("rpc_call_by_id(") + "id_" + proc_name + ", " + "svr_inst.ip" + ", " + "svr_inst.port, " + "inpro, " + "rsp_head, " + "rsp_body);");
     file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
     //std::string nameStr = name;
     //file_writeln(fp, std::string("std::string req_head = gen_http_head(") + "\"" + "/" + nameStr + "\"" + ", svr_inst.ip, inpro.get_buf_len());");
@@ -284,12 +284,11 @@ static void generate_common_head(const program_t &program,
     file_writeln(fp, std::string("#define RPC_VERSION \"") + program.version + "\"");
     file_writeln(fp, std::string("#define DS_IP \"") + program.ds_ip + "\"");
     file_writeln(fp, std::string("#define DS_PORT ") + num_to_str(program.ds_port));
-    file_writeln(fp, std::string("#define ID_add 1"));
-    file_writeln(fp, std::string("#define ID_multiply 2"));
-    file_writeln(fp, std::string("#define ID_max 3"));
-    file_writeln(fp, std::string("#define ID_min 4"));
-    file_writeln(fp, std::string("#define ID_sort 5"));
-    file_writeln(fp, std::string("#define ID_wc 6"));
+
+    for (int i = 0; i < program.procedures.size(); ++i) {
+        const procedure_t &procedure = program.procedures[i];
+        FILE_WRITELN(fp, "#define id_%s %d", procedure.name.c_str(), procedure.id);
+    }
     file_writeln(fp, "");
 
     /* generate procudures */
@@ -404,6 +403,9 @@ static void gen_svr_callee(const program_t &program,
         offsize += sprintf(line + offsize, ")");
         FILE_WRITE(fp, "%s", line);
         FILE_WRITE(fp, "{\n");
+        if (procedure.rettype != "void") {
+            FILE_WRITELN(fp, "return 0;");
+        }
         FILE_WRITELN(fp, "}\n");
     }
 
@@ -660,7 +662,8 @@ int main(int argc, char *argv[]) {
         prefix += "/" + program.name;
         generate_common_head(program, std::string(prefix + ".h").c_str());
         generate_client_stub(program, std::string(prefix + "_client_stub.cpp").c_str());
-        generate_stub_makefile(program, "conf/Make.tmpl", mkf_path.c_str());
+        gen_svr_main(program, "conf/main_cli.tmpl.cpp", (std::string(path) + "/main_demo.cpp").c_str());
+        generate_stub_makefile(program, "conf/make_cli.tmpl", mkf_path.c_str());
     }
     else if (strcmp(target, "server_stub") == 0){
         std::string prefix(path);

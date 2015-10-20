@@ -21,8 +21,8 @@ $(LIB): src/$(NAME)_client_stub.o
 	cp ../lib/common_lib.a $(LIB)
 	ar rcs $(LIB) src/$(NAME)_client_stub.o
 
-$(DEMO): src/main_client.o
-	$(CXX) $(CXXFLAGS) -lpthread -o $(DEMO) -Xlinker $(LIB) src/main_client.o
+$(DEMO): src/main_demo.o
+	$(CXX) $(CXXFLAGS) -lpthread -o $(DEMO) -Xlinker $(LIB) src/main_demo.o
 
 .PHONY: clean
 clean:

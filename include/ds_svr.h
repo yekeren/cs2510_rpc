@@ -7,11 +7,9 @@
 #include "rpc_common.h"
 #include "svr_base.h"
 
-/* svr_id -> <svr_inst_t, check_time> */
-typedef std::map<int, std::pair<svr_inst_t, unsigned long long> > svr_insts_map_t;
-
-/* id + version -> svr_insts_map_t */
-typedef std::map<std::string, svr_insts_map_t> svc_map_t;
+/* id + version -> svr_insts_list_t */
+typedef std::vector<svr_inst_t> svr_insts_list_t;
+typedef std::map<std::string, svr_insts_list_t> svc_map_t;
 
 class ds_event: public http_event {
     public:

@@ -53,8 +53,17 @@ void $name$_event::dsptch_http_request(const std::string &uri,
         const std::string &req_body, std::string &rsp_head, std::string &rsp_body) {
     if (uri.find("/get_svr_id") == 0) {
         do_get_svr_id(req_body, rsp_head, rsp_body);
-    } else {
-        $dispatch$
+    }
+    else if (uri.find("/call_by_id?id=") == 0) {
+        int id = atoi(uri.substr(strlen("/call_by_id?id=")).c_str());
+        switch (id) {
+            $dispatch$
+            default:
+                RPC_WARNING("invalid request %s", uri.c_str());
+        }
+    }
+    else {
+        RPC_WARNING("invalid request %s", uri.c_str());
     }
 }
 

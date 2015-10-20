@@ -145,19 +145,19 @@ void ds_event::process_get_insts_by_id(const std::string &uri,
 
     /* create response */
     ezxml_t root = ezxml_new("service");
+    std::vector<std::string> ports;
     for (int i = 0; i < (int)insts_list.size(); ++i) {
-        svr_inst_t &svr = insts_list[i];
-
-        char buf[32] = { 0 };
+        ports.push_back(num_to_str(insts_list[i].port));
+    }
+    for (int i = 0; i < (int)insts_list.size(); ++i) {
+        const svr_inst_t &svr = insts_list[i];
         ezxml_t child = ezxml_add_child(root, "server", i);
 
-        sprintf(buf, "%d", svr.id);
-        ezxml_set_txt(ezxml_add_child(child, "id", 0), buf);
+        ezxml_set_txt(ezxml_add_child(child, "id", 0), num_to_str(svr.id).c_str());
         ezxml_set_txt(ezxml_add_child(child, "name", 0), svr.name.c_str());
         ezxml_set_txt(ezxml_add_child(child, "version", 0), svr.version.c_str());
         ezxml_set_txt(ezxml_add_child(child, "ip", 0), svr.ip.c_str());
-        sprintf(buf, "%u", svr.port);
-        ezxml_set_txt(ezxml_add_child(child, "port", 0), buf);
+        ezxml_set_txt(ezxml_add_child(child, "port", 0), ports[i].c_str());
     }
     rsp_body = ezxml_toxml(root);
     ezxml_free(root);
@@ -239,12 +239,19 @@ void ds_svr::do_register(svr_inst_t &svr) {
 
     m_lock.lock();
     if (0 == m_svc_map.count(key)) {
-        svr_insts_map_t insts_map;
-        m_svc_map[key] = insts_map;
+        svr_insts_list_t insts_list;
+        m_svc_map[key] = insts_list;
     }
-    svr_insts_map_t &insts_map = m_svc_map[key];
-    insts_map[svr.id] = std::pair<svr_inst_t, unsigned long long>(
-            svr, get_cur_msec());
+    svr_insts_list_t &insts_list = m_svc_map[key];
+    svr_insts_list_t::iterator iter;
+    for (iter = insts_list.begin(); iter != insts_list.end(); ++iter) {
+        if (iter->ip == svr.ip && iter->port == svr.port) {
+            break;
+        }
+    }
+    if (iter == insts_list.end()) {
+        insts_list.push_back(svr);
+    }
     m_lock.unlock();
 
     /* record log */
@@ -265,8 +272,14 @@ void ds_svr::do_unregister(svr_inst_t &svr) {
 
     m_lock.lock();
     if (m_svc_map.count(key) > 0) {
-        svr_insts_map_t &insts_map = m_svc_map[key];
-        insts_map.erase(svr.id);
+        svr_insts_list_t &insts_list = m_svc_map[key];
+        svr_insts_list_t::iterator iter;
+        for (iter = insts_list.begin(); iter != insts_list.end(); ++iter) {
+            if (iter->ip == svr.ip && iter->port == svr.port) {
+                insts_list.erase(iter);
+                break;
+            }
+        }
     }
     m_lock.unlock();
 
@@ -291,11 +304,11 @@ void ds_svr::do_get_insts_by_id(int id, const std::string &version,
 
     m_lock.lock();
     if (m_svc_map.count(key) > 0) {
-        svr_insts_map_t &insts_map = m_svc_map[key];
-        svr_insts_map_t::iterator iter;
-        for (iter = insts_map.begin(); iter != insts_map.end(); ++iter) {
-            svr_insts_list.push_back(iter->second.first);
-            svr_inst_t &svr = iter->second.first;
+        svr_insts_list_t &insts_list = m_svc_map[key];
+        svr_insts_list_t::iterator iter;
+        for (iter = insts_list.begin(); iter != insts_list.end(); ++iter) {
+            const svr_inst_t &svr = *iter;
+            svr_insts_list.push_back(svr);
             RPC_DEBUG("get insts by id, id=%d, name=%s, version=%s, ip=%s, port=%u", 
                     svr.id, svr.name.c_str(), svr.version.c_str(),
                     svr.ip.c_str(), svr.port);

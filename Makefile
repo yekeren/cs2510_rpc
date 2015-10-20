@@ -27,6 +27,7 @@ ccend=\033[0m
 	${CC} ${CFLAGS} -c $(.SOURCE)
 
 COMMON_LIB_INCLUDES= \
+	include/ezxml.h \
 	include/svr_base.h \
 	include/svr_thrd.h \
 	include/io_event.h \
@@ -61,7 +62,7 @@ STUB_GENERATOR_OBJS= \
 	src/main_stub_generator.o
 
 # compiling all
-all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB)
+all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB) $(SERVER_STUB)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # compiling common_lib
@@ -96,6 +97,16 @@ $(CLIENT_STUB): $(STUB_GENERATOR)
 	mv output/client_stub/*.h output/client_stub/include
 	mv output/client_stub/*.cpp output/client_stub/src
 	@echo -e "$(cchighlight)successfully generating $(CLIENT_STUB)$(ccend)"
+
+# generating server_stub
+$(SERVER_STUB): $(STUB_GENERATOR)
+	mkdir -p output/server_stub/include
+	mkdir -p output/server_stub/src
+	mkdir -p output/server_stub/bin
+	./$(STUB_GENERATOR) -x $(IDLFILE) -t server_stub -p output/server_stub
+	mv output/server_stub/*.h output/server_stub/include
+	mv output/server_stub/*.cpp output/server_stub/src
+	@echo -e "$(cchighlight)successfully generating $(SERVER_STUB)$(ccend)"
 
 .PHONY: clean
 clean:

@@ -18,6 +18,88 @@ std::string num_to_str(int num) {
 }
 
 /**
+ * @brief register to directory server
+ *
+ * @param ip
+ * @param port
+ * @param my_id
+ * @param my_name
+ * @param my_version
+ * @param my_ip
+ * @param my_port
+ *
+ * @return 
+ */
+int register_information(const std::string &ip, unsigned short port,
+        int my_id, const std::string &my_name, const std::string &my_version,
+        const std::string &my_ip, unsigned short my_port) {
+
+    ezxml_t root = ezxml_new("server");
+    ezxml_set_txt(ezxml_add_child(root, "id", 0), num_to_str(my_id).c_str());
+    ezxml_set_txt(ezxml_add_child(root, "name", 0), my_name.c_str());
+    ezxml_set_txt(ezxml_add_child(root, "version", 0), my_version.c_str());
+    ezxml_set_txt(ezxml_add_child(root, "ip", 0), my_ip.c_str());
+    ezxml_set_txt(ezxml_add_child(root, "port", 0), num_to_str(my_port).c_str());
+
+    std::string data(ezxml_toxml(root));
+    ezxml_free(root);
+
+    /* talk to directory server */
+    std::string req_head, req_body;
+    std::string rsp_head, rsp_body;
+
+    req_head = gen_http_head("/register", ip, data.size());
+    req_body = data;
+    int ret = http_talk(ip, port, req_head, req_body, rsp_head, rsp_body);
+    if (0 > ret) {
+        RPC_WARNING("http_talk() to directory server error");
+        return -1;
+    }
+    return 0;
+}
+
+/**
+ * @brief unregister to directory server
+ *
+ * @param ip
+ * @param port
+ * @param my_id
+ * @param my_name
+ * @param my_version
+ * @param my_ip
+ * @param my_port
+ *
+ * @return 
+ */
+int unregister_information(const std::string &ip, unsigned short port,
+        int my_id, const std::string &my_name, const std::string &my_version,
+        const std::string &my_ip, unsigned short my_port) {
+
+    ezxml_t root = ezxml_new("server");
+    ezxml_set_txt(ezxml_add_child(root, "id", 0), num_to_str(my_id).c_str());
+    ezxml_set_txt(ezxml_add_child(root, "name", 0), my_name.c_str());
+    ezxml_set_txt(ezxml_add_child(root, "version", 0), my_version.c_str());
+    ezxml_set_txt(ezxml_add_child(root, "ip", 0), my_ip.c_str());
+    ezxml_set_txt(ezxml_add_child(root, "port", 0), num_to_str(my_port).c_str());
+
+    std::string data(ezxml_toxml(root));
+    ezxml_free(root);
+
+    /* talk to directory server */
+    std::string req_head, req_body;
+    std::string rsp_head, rsp_body;
+
+    req_head = gen_http_head("/unregister", ip, data.size());
+    req_body = data;
+    int ret = http_talk(ip, port, req_head, req_body, rsp_head, rsp_body);
+    if (0 > ret) {
+        RPC_WARNING("http_talk() to directory server error");
+        return -1;
+    }
+    return 0;
+}
+
+/**
  * @brief locate server instances
  *
  * @param ip address of directory server
@@ -156,7 +238,7 @@ int get_and_verify_svr(const std::string &ip, unsigned short port,
 int rpc_call_by_id(int proc_id, std::string svr_inst_ip, short svr_inst_port, basic_proto &inpro, std::string &rsp_head, std::string &rsp_body)
 {
     char id_request[1024] = {0};
-    sprintf(id_request, "call_by_id?id=%d", proc_id);
+    sprintf(id_request, "/call_by_id?id=%d", proc_id);
     std::string req_head = gen_http_head(id_request, svr_inst_ip, inpro.get_buf_len());
     std::string req_body(inpro.get_buf(), inpro.get_buf_len());
     return http_talk(svr_inst_ip, svr_inst_port, req_head, req_body, rsp_head, rsp_body);
