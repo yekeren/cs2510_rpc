@@ -22,7 +22,11 @@ all: $(SVR)
 
 $(SVR): $(SVR_OBJS)
 	mkdir -p bin
+ifeq ($(OS),Linux)
+	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR) -Xlinker "-(" ../lib/common_lib.a $(SVR_OBJS) -Xlinker "-)"
+else
 	$(CXX) $(CXXFLAGS) -lpthread -o $(SVR) -Xlinker ../lib/common_lib.a $(SVR_OBJS)
+endif
 
 .PHONY: clean
 clean:

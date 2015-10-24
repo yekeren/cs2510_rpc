@@ -404,7 +404,7 @@ static void gen_svr_callee(const program_t &program,
         FILE_WRITE(fp, "%s", line);
         FILE_WRITE(fp, "{\n");
         if (procedure.rettype != "void") {
-            FILE_WRITELN(fp, "return 0;");
+            FILE_WRITELN(fp, T"return 0;");
         }
         FILE_WRITELN(fp, "}\n");
     }
