@@ -217,7 +217,7 @@ static void generate_client_content_stub(FILE *fp, std::string proc_name, const 
             file_write(fp, std::string("\tinpro.add_float("));
             file_writeln(fp, param.name + ");");
         }
-        else if (param.type == "char*"){
+        else if (param.type == "String"){
             file_writeln(fp, std::string("\tstd::string ") + param.name +"_str = " + param.name + ";");
             file_writeln(fp, std::string("\tinpro.add_string(" + param.name +"_str" + ".size(), " + param.name +"_str" + ".data());"));
         }
@@ -245,7 +245,7 @@ static void generate_client_content_stub(FILE *fp, std::string proc_name, const 
         else if (param.type == "float"){
             file_writeln(fp, std::string("\toutpro.read_float(") + param.name + ");");
         }
-        else if (param.type == "char*"){
+        else if (param.type == "String"){
             file_writeln(fp, std::string("\tint ") + param.name + "_len;");
             file_writeln(fp, std::string("\toutpro.read_string(") + param.name +"_len, " + param.name + ");");
         }
