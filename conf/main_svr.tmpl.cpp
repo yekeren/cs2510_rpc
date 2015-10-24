@@ -1,4 +1,5 @@
 #include <signal.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <getopt.h>
 #include "rpc_log.h"

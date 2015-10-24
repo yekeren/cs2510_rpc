@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include <getopt.h>
 #include <string>
 #include <vector>
@@ -333,6 +334,7 @@ static void generate_client_stub(const program_t &program,
     file_writeln(fp, std::string("#include \"") + program.name + ".h\"");
     file_writeln(fp, "#include <assert.h>");
     file_writeln(fp, "#include <stdlib.h>");
+    file_writeln(fp, "#include <string.h>");
     file_writeln(fp, "#include <stdio.h>");
     file_writeln(fp, "#include \"rpc_log.h\"");
     file_writeln(fp, "#include \"rpc_http.h\"");
@@ -455,8 +457,9 @@ static void gen_svr_stub_h(const program_t &program,
         if (strstr(line, "$stub$")) {
             for (int i = 0; i < program.procedures.size(); ++i) {
                 const procedure_t &procedure = program.procedures[i];
-                FILE_WRITELN(fp_outp, "void process_%s(const std::string &req_body,", procedure.name.c_str());
-                FILE_WRITELN(fp_outp, TT"std::string &rsp_head, std::string &rsp_body) {");
+                FILE_WRITELN(fp_outp, TT"void process_%s(const std::string &req_body,", procedure.name.c_str());
+                FILE_WRITELN(fp_outp, TTTT"std::string &rsp_head, std::string &rsp_body);");
+                FILE_WRITELN(fp_outp, "");
             }
         }
         else {

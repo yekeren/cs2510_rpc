@@ -1,7 +1,7 @@
 OS=$(shell uname -s)
 INCLUDE='./include'
 
-IDLFILE=conf/idl.xml
+IDLFILE=conf/idl2.xml
 
 CXX=g++
 CXXFLAGS=-g -I$(INCLUDE)
@@ -64,7 +64,7 @@ STUB_GENERATOR_OBJS= \
 
 # compiling all
 #all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB) $(SERVER_STUB)
-all: $(COMMON_LIB) $(DIRECTORY_SERVER)
+all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(SERVER_STUB)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # compiling common_lib
@@ -103,6 +103,7 @@ $(CLIENT_STUB): $(STUB_GENERATOR)
 	./$(STUB_GENERATOR) -x $(IDLFILE) -t client_stub -p output/client_stub
 	mv output/client_stub/*.h output/client_stub/include
 	mv output/client_stub/*.cpp output/client_stub/src
+	cd output/client_stub/ && make
 	@echo -e "$(cchighlight)successfully generating $(CLIENT_STUB)$(ccend)"
 
 # generating server_stub
@@ -113,6 +114,7 @@ $(SERVER_STUB): $(STUB_GENERATOR)
 	./$(STUB_GENERATOR) -x $(IDLFILE) -t server_stub -p output/server_stub
 	mv output/server_stub/*.h output/server_stub/include
 	mv output/server_stub/*.cpp output/server_stub/src
+	cd output/server_stub/ && make
 	@echo -e "$(cchighlight)successfully generating $(SERVER_STUB)$(ccend)"
 
 .PHONY: clean

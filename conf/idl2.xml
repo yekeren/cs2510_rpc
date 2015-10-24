@@ -1,0 +1,63 @@
+<program>
+    <directory_server_ip>136.142.227.18</directory_server_ip>
+    <directory_server_port>8000</directory_server_port>
+
+    <id>11111</id>
+    <name>comp</name>
+    <version>1.0.0</version>
+
+    <procedure>
+        <name>test1_divide</name>
+        <id>0</id>
+        <return>double</return>
+        <param>
+            <name>a</name>
+            <index>0</index>
+            <type>double</type>
+        </param>
+        <param>
+            <name>b</name>
+            <index>1</index>
+            <type>double</type>
+        </param>
+    </procedure>
+
+    <procedure>
+        <name>test1_transpose</name>
+        <id>1</id>
+        <return>void</return>
+        <param>
+            <name>A</name>
+            <index>0</index>
+            <type>Matrix</type>
+        </param>
+        <param>
+            <name>B</name>
+            <index>1</index>
+            <type>Matrix</type>
+        </param>
+    </procedure>
+
+    <procedure>
+        <name>test1_sort</name>
+        <id>2</id>
+        <return>void</return>
+        <param>
+            <name>data</name>
+            <index>0</index>
+            <type>Array</type>
+        </param>
+    </procedure>
+
+    <procedure>
+        <name>test1_wordcount</name>
+        <id>3</id>
+        <return>int</return>
+        <param>
+            <name>str</name>
+            <index>0</index>
+            <type>String</type>
+        </param>
+    </procedure>
+
+</program>

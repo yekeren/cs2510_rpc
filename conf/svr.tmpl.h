@@ -21,17 +21,7 @@ class $name$_event: public http_event {
                 std::string &rsp_head, std::string &rsp_body);
 
     public:
-        void process_add(const std::string &req_body, 
-                std::string &rsp_head, std::string &rsp_body);
-    
-        void process_multiply(const std::string &req_body,
-                std::string &rsp_head, std::string &rsp_body);
-    
-        void process_max(const std::string &req_body,
-                std::string &rsp_head, std::string &rsp_body);
-    
-        void process_wc(const std::string &req_body,
-                std::string &rsp_head, std::string &rsp_body);
+        $stub$
 };
 
 class $name$_svr: public svr_base {
