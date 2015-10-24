@@ -1,3 +1,4 @@
+OS=$(shell uname -s)
 INCLUDE='./include'
 
 IDLFILE=conf/idl.xml
@@ -78,7 +79,12 @@ $(COMMON_LIB): $(COMMON_LIB_OBJS)
 # compiling directory_server
 $(DIRECTORY_SERVER): $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS)
 	mkdir -p output/bin
+	echo $(OS)
+ifeq ($(OS),Linux)
 	$(CXX) $(CXXFLAGS) -lpthread -o $(DIRECTORY_SERVER) -Xlinker "-(" $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS) -Xlinker "-)"
+else
+	$(CXX) $(CXXFLAGS) -lpthread -o $(DIRECTORY_SERVER) -Xlinker $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS)
+endif
 	cp $(DIRECTORY_SERVER) output/bin
 	@echo -e "$(cchighlight)successfully compiling $(DIRECTORY_SERVER)$(ccend)"
 
