@@ -252,7 +252,10 @@ static void generate_client_content_stub(FILE *fp, std::string proc_name, const 
         }
         else if (param.type == "Array"){
             //file_writeln(fp, std::string("int retval;"));
-            file_writeln(fp, std::string("\toutpro.read_array(") + param.name + ", " + param.name + "_len);");
+            file_writeln(fp, std::string("\tint ") + "*" + param.name + "_bak;");
+            file_writeln(fp, std::string("\toutpro.read_array(") + param.name + "_bak" + ", " + param.name + "_len);");
+            file_writeln(fp, std::string("\tmemcpy(") + param.name + ", " + param.name + "_bak, " + "sizeof(int) * " + param.name + "_len);");
+            //file_writeln(fp, std::string("\tmemcpy(") + param.name + ", " + )
             //file_writeln(fp, std::string("outpro.read_int(retval);"));
             //file_writeln(fp, std::string("return retval;"));
         }
