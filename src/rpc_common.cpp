@@ -1,4 +1,5 @@
 #include "rpc_common.h"
+#include "time.h"
 #include "ezxml.h"
 #include "rpc_log.h"
 #include "rpc_http.h"
@@ -34,12 +35,15 @@ int register_information(const std::string &ip, unsigned short port,
         int my_id, const std::string &my_name, const std::string &my_version,
         const std::string &my_ip, unsigned short my_port) {
 
+    std::string str_id = num_to_str(my_id);
+    std::string str_port = num_to_str(my_port);
+
     ezxml_t root = ezxml_new("server");
-    ezxml_set_txt(ezxml_add_child(root, "id", 0), num_to_str(my_id).c_str());
+    ezxml_set_txt(ezxml_add_child(root, "id", 0), str_id.c_str());
     ezxml_set_txt(ezxml_add_child(root, "name", 0), my_name.c_str());
     ezxml_set_txt(ezxml_add_child(root, "version", 0), my_version.c_str());
     ezxml_set_txt(ezxml_add_child(root, "ip", 0), my_ip.c_str());
-    ezxml_set_txt(ezxml_add_child(root, "port", 0), num_to_str(my_port).c_str());
+    ezxml_set_txt(ezxml_add_child(root, "port", 0), str_port.c_str());
 
     std::string data(ezxml_toxml(root));
     ezxml_free(root);
@@ -75,8 +79,11 @@ int unregister_information(const std::string &ip, unsigned short port,
         int my_id, const std::string &my_name, const std::string &my_version,
         const std::string &my_ip, unsigned short my_port) {
 
+    std::string str_id = num_to_str(my_id);
+    std::string str_port = num_to_str(my_port);
+
     ezxml_t root = ezxml_new("server");
-    ezxml_set_txt(ezxml_add_child(root, "id", 0), num_to_str(my_id).c_str());
+    ezxml_set_txt(ezxml_add_child(root, "id", 0), str_id.c_str());
     ezxml_set_txt(ezxml_add_child(root, "name", 0), my_name.c_str());
     ezxml_set_txt(ezxml_add_child(root, "version", 0), my_version.c_str());
     ezxml_set_txt(ezxml_add_child(root, "ip", 0), my_ip.c_str());
@@ -214,9 +221,12 @@ int get_and_verify_svr(const std::string &ip, unsigned short port,
         RPC_WARNING("no server located, id=%d, version=%s", id, version.c_str());
         return -1;
     }
-    svr_inst = svr_insts_list[rand() % svr_insts_list.size()];
-    RPC_INFO("server located, id=%d, version=%s, ip=%s, port=%u",
-            svr_inst.id, svr_inst.version.c_str(),
+    srand((unsigned int )time(NULL));
+
+    int index = rand() % svr_insts_list.size();
+    svr_inst = svr_insts_list[index];
+    RPC_INFO("server located, index=%d, svr_insts_list.size=%u, id=%d, version=%s, ip=%s, port=%u",
+            index, svr_insts_list.size(), svr_inst.id, svr_inst.version.c_str(),
             svr_inst.ip.c_str(), svr_inst.port);
 
     /* verify server version */

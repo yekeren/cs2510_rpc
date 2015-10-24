@@ -1,10 +1,11 @@
 #include "basic_proto.h"
 #include <stdlib.h>
 #include <string.h>
+#include "rpc_log.h"
 
 basic_proto::basic_proto() {
     m_encoded_len = 0;
-    m_buf.resize(16);
+    m_buf.resize(32);
 }
 
 basic_proto::basic_proto(const char* buf, int buf_len){
@@ -36,7 +37,7 @@ void basic_proto::add_float(float retval){
     while (m_encoded_len + sizeof(retval) > m_buf.size()){
         m_buf.resize(m_buf.size()*2);
     }
-    *(int*) (m_buf.data() + m_encoded_len) = retval;
+    *(float*) (m_buf.data() + m_encoded_len) = retval;
     m_encoded_len += sizeof(float);
 }
 
@@ -44,7 +45,7 @@ int basic_proto::read_float(float &retval){
     if ((m_encoded_len + sizeof(float)) > m_buf.size()){
         return -1;
     }
-    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
+    retval = *(float*)((char*)m_buf.data() + m_encoded_len);
     m_encoded_len += sizeof(float);
     return 0;
 }
@@ -52,7 +53,7 @@ void basic_proto::add_double(double retval){
     while (m_encoded_len + sizeof(retval) > m_buf.size()){
         m_buf.resize(m_buf.size()*2);
     }
-    *(int*) (m_buf.data() + m_encoded_len) = retval;
+    *(double*) (m_buf.data() + m_encoded_len) = retval;
     m_encoded_len += sizeof(double);
 }
 
@@ -60,7 +61,7 @@ int basic_proto::read_double(double &retval){
     if ((m_encoded_len + sizeof(double)) > m_buf.size()){
         return -1;
     }
-    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
+    retval = *(double*)((char*)m_buf.data() + m_encoded_len);
     m_encoded_len += sizeof(double);
     return 0;
 }

@@ -63,8 +63,7 @@ STUB_GENERATOR_OBJS= \
 	src/main_stub_generator.o
 
 # compiling all
-#all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB) $(SERVER_STUB)
-all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(SERVER_STUB)
+all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB) $(SERVER_STUB)
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # compiling common_lib
