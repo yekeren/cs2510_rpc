@@ -185,12 +185,31 @@ static void gen_req_rsp(FILE *fp, std::string proc_name){
 }
 
 static void generate_client_content_stub(FILE *fp, std::string proc_name, const char *name, const char *ret_type, std::vector<param_t> params){
+    std::string return_type = ret_type;
     file_writeln(fp, " { \n");
     /* request server */
     file_writeln(fp, std::string("\tsvr_inst_t svr_inst;"));
     std::string ip_str;
     std::string ss = std::string("\tint ret_val = get_and_verify_svr(DS_IP, DS_PORT, RPC_ID, RPC_VERSION, svr_inst);");
     file_writeln(fp, ss);
+    std::string error = std::string("\tif(ret_val == -1){");
+    file_writeln(fp, error);
+    std::string error_content = std::string("\t\tRPC_WARNING(\"VERSION DISMATCH.\");");
+    file_writeln(fp, error_content);
+    if(return_type == "int"){
+        file_writeln(fp, std::string("\t\treturn 0;"));
+    }
+    else if(return_type == "double"){
+        file_writeln(fp, std::string("\t\treturn 0.0;"));
+    }
+    else if(return_type == "float"){
+        file_writeln(fp, std::string("\t\treturn 0.0;"));
+    }
+    else{
+        file_writeln(fp, std::string("\t\treturn;"));
+    }
+
+    file_writeln(fp, std::string("\t}"));
     file_writeln(fp, std::string("\tRPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u\"" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst.port);");
     file_writeln(fp, "\tbasic_proto inpro;");
     std::string nameStr = name;
@@ -246,11 +265,10 @@ static void generate_client_content_stub(FILE *fp, std::string proc_name, const 
             file_writeln(fp, std::string("\toutpro.read_float(") + param.name + ");");
         }
         else if (param.type == "String"){
-            file_writeln(fp, std::string("\tint ") + param.name + "_len;");
-            file_writeln(fp, std::string("\toutpro.read_string(") + param.name +"_len, " + param.name + ");");
+            file_writeln(fp, std::string("\tint ") + param.name + "_len_1;");
+            file_writeln(fp, std::string("\toutpro.read_string(") + param.name +"_len_1, " + param.name + ");");
         }
     }
-    std::string return_type = ret_type;
     if(return_type == "int"){
         file_writeln(fp, std::string("\tint retval;"));
         file_writeln(fp, std::string("\toutpro.read_int(retval);"));
