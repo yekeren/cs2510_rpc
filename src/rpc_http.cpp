@@ -130,6 +130,7 @@ int http_talk(const std::string &ip, unsigned short port,
     if (-1 == fd) {
         RPC_WARNING("connect_ex() failed, fd=%d, ip=%s, port=%u", 
                 fd, ip.c_str(), port);
+        return -1;
     }
 
     /* send data to the remote server */

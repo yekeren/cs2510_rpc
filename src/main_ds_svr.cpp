@@ -1,6 +1,5 @@
 #include <signal.h>
 #include <getopt.h>
-#include <assert.h>
 #include "rpc_log.h"
 #include "ds_svr.h"
 
@@ -54,19 +53,32 @@ int main(int argc, char *argv[]) {
     }
 
     /* start service */
-    RPC_WARNING("threads num=%d", threads_num);
-    RPC_WARNING("listen port=%d", port);
+    RPC_INFO("threads num=%d", threads_num);
+    RPC_INFO("listen port=%d", port);
 
     signal(SIGINT, signal_proc);
     signal(SIGTERM, signal_proc);
 
     /* initialize server */
     ds_svr *svr = new ds_svr;
-    assert(0 == svr->run(threads_num));
-    assert(0 == svr->bind(port));
+    if (0 != svr->run(threads_num)) {
+        RPC_WARNING("create threads error");
+        exit(-1);
+    }
+    if (0 != svr->bind(port)) {
+        RPC_WARNING("bind error");
+        exit(-1);
+    }
 
+    unsigned long long prev_msec = get_cur_msec();
     while (running) {
         svr->run_routine(10);
+        unsigned long long curr_msec = get_cur_msec();
+        if (curr_msec - prev_msec >= 5 * 1000) {
+            /* checking alive servers */
+            svr->check_timeout();
+            prev_msec = curr_msec;
+        }
     }
 
     svr->stop();

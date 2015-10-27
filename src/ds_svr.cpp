@@ -245,12 +245,15 @@ void ds_svr::do_register(svr_inst_t &svr) {
     svr_insts_list_t &insts_list = m_svc_map[key];
     svr_insts_list_t::iterator iter;
     for (iter = insts_list.begin(); iter != insts_list.end(); ++iter) {
-        if (iter->ip == svr.ip && iter->port == svr.port) {
+        if (iter->first.ip == svr.ip && iter->first.port == svr.port) {
             break;
         }
     }
     if (iter == insts_list.end()) {
-        insts_list.push_back(svr);
+        insts_list.push_back(std::pair<svr_inst_t, unsigned long long>(
+                    svr, get_cur_msec()));
+    } else {
+        iter->second = get_cur_msec();
     }
     m_lock.unlock();
 
@@ -275,10 +278,13 @@ void ds_svr::do_unregister(svr_inst_t &svr) {
         svr_insts_list_t &insts_list = m_svc_map[key];
         svr_insts_list_t::iterator iter;
         for (iter = insts_list.begin(); iter != insts_list.end(); ++iter) {
-            if (iter->ip == svr.ip && iter->port == svr.port) {
+            if (iter->first.ip == svr.ip && iter->first.port == svr.port) {
                 insts_list.erase(iter);
                 break;
             }
+        }
+        if (insts_list.size() == 0) {
+            m_svc_map.erase(key);
         }
     }
     m_lock.unlock();
@@ -307,11 +313,47 @@ void ds_svr::do_get_insts_by_id(int id, const std::string &version,
         svr_insts_list_t &insts_list = m_svc_map[key];
         svr_insts_list_t::iterator iter;
         for (iter = insts_list.begin(); iter != insts_list.end(); ++iter) {
-            const svr_inst_t &svr = *iter;
+            const svr_inst_t &svr = iter->first;
             svr_insts_list.push_back(svr);
             RPC_DEBUG("get insts by id, id=%d, name=%s, version=%s, ip=%s, port=%u", 
                     svr.id, svr.name.c_str(), svr.version.c_str(),
                     svr.ip.c_str(), svr.port);
+        }
+    }
+    m_lock.unlock();
+
+    /* record log */
+    RPC_INFO("get_insts_by_id succ, id=%d, version=%s, alive_svrs=%lu", 
+            id, version.c_str(), svr_insts_list.size());
+}
+
+/**
+ * @brief check timeout
+ */
+void ds_svr::check_timeout() {
+    m_lock.lock();
+
+    unsigned long long cur_msec = get_cur_msec();
+
+    svc_map_t::iterator iter = m_svc_map.begin();
+    for (; iter != m_svc_map.end();) {
+        svr_insts_list_t &insts_list = iter->second;
+        svr_insts_list_t::iterator sub_iter = insts_list.begin();
+
+        for (; sub_iter != insts_list.end();) {
+            if (cur_msec - sub_iter->second >= 15 * 1000) {
+                RPC_INFO("check_timeout, id::version=%s, ip=%s, port=%d", 
+                        iter->first.c_str(), sub_iter->first.ip.c_str(), sub_iter->first.port);
+                insts_list.erase(sub_iter++);
+            } else {
+                ++sub_iter;
+            }
+        }
+
+        if (insts_list.size() == 0) {
+            m_svc_map.erase(iter++);
+        } else {
+            ++iter;
         }
     }
     m_lock.unlock();

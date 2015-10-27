@@ -11,14 +11,15 @@ cchighlight=\033[0;31m
 ccend=\033[0m
 
 SVR_OBJS= \
-    src/$(NAME)_svr.o \
-    src/$(NAME)_svr_callee.o \
-    src/main_$(NAME)_svr.o
+	src/$(NAME)_svr.o \
+	src/$(NAME)_svr_callee.o \
+	src/main_$(NAME)_svr.o
 
 .cpp.obj:
 	${CXX} ${CXXFLAGS} -c $(.SOURCE)
 
 all: $(SVR)
+	mv $(SVR) bin
 	@echo -e "$(cchighlight)successfully compiling server stub$(ccend)"
 
 $(SVR): $(SVR_OBJS)

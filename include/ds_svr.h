@@ -2,13 +2,14 @@
 #define __DS_SVR_H__
 
 #include <map>
+#include <list>
 #include "ezxml.h"
 #include "http_event.h"
 #include "rpc_common.h"
 #include "svr_base.h"
 
 /* id + version -> svr_insts_list_t */
-typedef std::vector<svr_inst_t> svr_insts_list_t;
+typedef std::list<std::pair<svr_inst_t, unsigned long long> > svr_insts_list_t;
 typedef std::map<std::string, svr_insts_list_t> svc_map_t;
 
 class ds_event: public http_event {
@@ -122,6 +123,11 @@ class ds_svr: public svr_base {
          */
         void do_get_insts_by_id(int id, const std::string &version,
                 std::vector<svr_inst_t> &svr_insts_list);
+
+        /**
+         * @brief check timeout
+         */
+        void check_timeout();
 
     private:
         spin_lock m_lock;

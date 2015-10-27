@@ -225,7 +225,7 @@ int get_and_verify_svr(const std::string &ip, unsigned short port,
 
     int index = rand() % svr_insts_list.size();
     svr_inst = svr_insts_list[index];
-    RPC_INFO("server located, index=%d, svr_insts_list.size=%u, id=%d, version=%s, ip=%s, port=%u",
+    RPC_INFO("server located, index=%d, svr_insts_list.size=%lu, id=%d, version=%s, ip=%s, port=%u",
             index, svr_insts_list.size(), svr_inst.id, svr_inst.version.c_str(),
             svr_inst.ip.c_str(), svr_inst.port);
 
