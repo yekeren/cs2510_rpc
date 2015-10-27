@@ -341,7 +341,7 @@ void ds_svr::check_timeout() {
         svr_insts_list_t::iterator sub_iter = insts_list.begin();
 
         for (; sub_iter != insts_list.end();) {
-            if (cur_msec - sub_iter->second >= 15 * 1000) {
+            if (cur_msec - sub_iter->second >= 30 * 1000) {
                 RPC_INFO("check_timeout, id::version=%s, ip=%s, port=%d", 
                         iter->first.c_str(), sub_iter->first.ip.c_str(), sub_iter->first.port);
                 insts_list.erase(sub_iter++);

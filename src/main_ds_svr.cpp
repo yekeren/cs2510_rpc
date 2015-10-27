@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     while (running) {
         svr->run_routine(10);
         unsigned long long curr_msec = get_cur_msec();
-        if (curr_msec - prev_msec >= 5 * 1000) {
+        if (curr_msec - prev_msec >= 30 * 1000) {
             /* checking alive servers */
             svr->check_timeout();
             prev_msec = curr_msec;

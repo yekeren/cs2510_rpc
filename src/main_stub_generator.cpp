@@ -61,20 +61,16 @@ static void usage(int argc, char *argv[]) {
 
 #define FILE_WRITELN(fp, format, args...) \
     fprintf(fp, format"\n", ##args)
-    //fprintf(stdout, format"\n", ##args)
 
 #define FILE_WRITE(fp, format, args...) \
     fprintf(fp, format, ##args)
-    //fprintf(stdout, format, ##args)
 
 static void file_writeln(FILE *fp, const std::string &line) {
-    //puts((line).c_str());
     fputs((line + "\n").c_str(), fp);
 }
 
 static void file_write(FILE *fp, const std::string &line) {
     fprintf(fp, "%s", (line).c_str());
-    //fprintf(stdout, "%s", (line).c_str());
 }
 
 static std::string generate_param(const param_t &param) {
@@ -166,129 +162,76 @@ static bool comp_index(const param_t &a, const param_t &b) {
     return a.index < b.index;
 }
 
-/**
- * @brief generate common head file
- *
- * @param xml_filename
- * @param filename
- */
-
-static void gen_req_rsp(FILE *fp, std::string proc_name){
-    file_writeln(fp, std::string("\tstd::string rsp_head, rsp_body;"));
-    file_writeln(fp, std::string("\trpc_call_by_id(") + "id_" + proc_name + ", " + "svr_inst.ip" + ", " + "svr_inst.port, " + "inpro, " + "rsp_head, " + "rsp_body);");
-    file_writeln(fp, std::string("\tbasic_proto outpro(rsp_body.data(), rsp_body.size());"));
-    //std::string nameStr = name;
-    //file_writeln(fp, std::string("std::string req_head = gen_http_head(") + "\"" + "/" + nameStr + "\"" + ", svr_inst.ip, inpro.get_buf_len());");
-    //file_writeln(fp, std::string("std::string req_body(inpro.get_buf(), inpro.get_buf_len());"));
-    //file_writeln(fp, std::string("std::string rsp_head, rsp_body;"));
-    //file_writeln(fp, std::string("http_talk(svr_inst.ip, svr_inst.port, req_head, req_body, rsp_head, rsp_body);"));
-    //file_writeln(fp, std::string("basic_proto outpro(rsp_body.data(), rsp_body.size());"));
-}
-
 static void generate_client_content_stub(FILE *fp, std::string proc_name, const char *name, const char *ret_type, std::vector<param_t> params){
     std::string return_type = ret_type;
-    file_writeln(fp, " { \n");
-    /* request server */
-    file_writeln(fp, std::string("\tsvr_inst_t svr_inst;"));
-    std::string ip_str;
-    std::string ss = std::string("\tint ret_val = get_and_verify_svr(DS_IP, DS_PORT, RPC_ID, RPC_VERSION, svr_inst);");
-    file_writeln(fp, ss);
-    std::string error = std::string("\tif(ret_val == -1){");
-    file_writeln(fp, error);
-    std::string error_content = std::string("\t\tRPC_WARNING(\"VERSION DISMATCH.\");");
-    file_writeln(fp, error_content);
-    if(return_type == "int"){
-        file_writeln(fp, std::string("\t\treturn 0;"));
-    }
-    else if(return_type == "double"){
-        file_writeln(fp, std::string("\t\treturn 0.0;"));
-    }
-    else if(return_type == "float"){
-        file_writeln(fp, std::string("\t\treturn 0.0;"));
-    }
-    else{
-        file_writeln(fp, std::string("\t\treturn;"));
-    }
 
-    file_writeln(fp, std::string("\t}"));
-    file_writeln(fp, std::string("\tRPC_INFO(")+ "\"" + "server verified, id=%d, version=%s, ip=%s, port=%u\"" + ", " + "svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst.port);");
-    file_writeln(fp, "\tbasic_proto inpro;");
-    std::string nameStr = name;
+    /* lookup for server */
+    FILE_WRITELN(fp, " {\n");
+    FILE_WRITELN(fp, T"svr_inst_t svr_inst;");
+    FILE_WRITELN(fp, T"int ret_val = get_and_verify_svr(DS_IP, DS_PORT, RPC_ID, RPC_VERSION, svr_inst);");
+    FILE_WRITELN(fp, T"if (ret_val == -1) {");
+	FILE_WRITELN(fp, TT"RPC_INFO(\"server verified, id=%%d, version=%%s, ip=%%s, port=%%u\", ");
+    FILE_WRITELN(fp, TTTT"svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst.port);");
+    if (return_type == "void") {
+        FILE_WRITELN(fp, TT"return;");
+    } else {
+        FILE_WRITELN(fp, TT"return 0;");
+    }
+    FILE_WRITELN(fp, T"}");
+
+    /* marshalling */
+    FILE_WRITELN(fp, T"basic_proto inpro;");
     for (int i = 0; i < params.size(); ++i){
         param_t &param = params[i];
         if (param.type == "Matrix"){
-            file_write(fp, std::string("\tinpro.add_matrix("));
-            file_write(fp, param.name + ", " + param.name + "_row," + param.name + "_col");
-            file_writeln(fp,std::string(");"));
+            FILE_WRITELN(fp, T"inpro.add_matrix(%s, %s_row, %s_col);", param.name.c_str(), param.name.c_str(), param.name.c_str());
         }
         else if (param.type == "Array"){
-            file_write(fp, std::string("\tinpro.add_array("));
-            file_writeln(fp, param.name + ", " + param.name + "_len);");
-        }
-        else if (param.type == "int"){
-            file_write(fp, std::string("\tinpro.add_int("));
-            file_writeln(fp, param.name + ");");
-        }
-        else if (param.type == "double"){
-            file_write(fp, std::string("\tinpro.add_double("));
-            file_writeln(fp, param.name + ");");
-        }
-        else if (param.type == "float"){
-            file_write(fp, std::string("\tinpro.add_float("));
-            file_writeln(fp, param.name + ");");
+            FILE_WRITELN(fp, T"inpro.add_array(%s, %s_len);", param.name.c_str(), param.name.c_str());
         }
         else if (param.type == "String"){
-            file_writeln(fp, std::string("\tstd::string ") + param.name +"_str = " + param.name + ";");
-            file_writeln(fp, std::string("\tinpro.add_string(" + param.name +"_str" + ".size(), " + param.name +"_str" + ".data());"));
+            FILE_WRITELN(fp, T"inpro.add_string(%s_len, %s);", param.name.c_str(), param.name.c_str());
+        }
+        else {
+            FILE_WRITELN(fp, T"inpro.add_%s(%s);", param.type.c_str(), param.name.c_str());
         }
     }
-    gen_req_rsp(fp, proc_name);
+    FILE_WRITELN(fp, "");
+
+    FILE_WRITELN(fp, T"std::string rsp_head, rsp_body;");
+	FILE_WRITELN(fp, T"rpc_call_by_id(id_%s, svr_inst.ip, svr_inst.port, inpro, rsp_head, rsp_body);", proc_name.c_str());
+    FILE_WRITELN(fp, T"basic_proto outpro(rsp_body.data(), rsp_body.size());");
+    FILE_WRITELN(fp, "");
+
+    /* unmarshalling */
     for (int i = 0; i < params.size(); ++i){
         param_t &param = params[i];
         if (param.type == "Matrix"){
-            file_writeln(fp, std::string("\tint ") + "*" + param.name + "_bak;");
-            file_writeln(fp, std::string("\toutpro.read_matrix(") + param.name + "_bak, " + param.name + "_row, " + param.name + "_col);");
-            file_writeln(fp, std::string("\tmemcpy(") + param.name + ", " + param.name + "_bak, " + "sizeof(int) * " + param.name + "_row" + " * " + param.name + "_col);");
+            FILE_WRITELN(fp, T"int *%s_bak;", param.name.c_str());
+            FILE_WRITELN(fp, T"outpro.read_matrix(%s_bak, %s_row, %s_col);", param.name.c_str(), param.name.c_str(), param.name.c_str());
+            FILE_WRITELN(fp, T"memcpy(%s, %s_bak, sizeof(int) * %s_row * %s_col);", 
+                    param.name.c_str(), param.name.c_str(), param.name.c_str(), param.name.c_str());
         }
         else if (param.type == "Array"){
-            //file_writeln(fp, std::string("int retval;"));
-            file_writeln(fp, std::string("\tint ") + "*" + param.name + "_bak;");
-            file_writeln(fp, std::string("\toutpro.read_array(") + param.name + "_bak" + ", " + param.name + "_len);");
-            file_writeln(fp, std::string("\tmemcpy(") + param.name + ", " + param.name + "_bak, " + "sizeof(int) * " + param.name + "_len);");
-            //file_writeln(fp, std::string("\tmemcpy(") + param.name + ", " + )
-            //file_writeln(fp, std::string("outpro.read_int(retval);"));
-            //file_writeln(fp, std::string("return retval;"));
-        }
-        else if (param.type == "int"){
-            file_writeln(fp, std::string("\toutpro.read_int(") + param.name + ");");
-        }
-        else if (param.type == "double"){
-            file_writeln(fp, std::string("\toutpro.read_double(") + param.name + ");");
-        }
-        else if (param.type == "float"){
-            file_writeln(fp, std::string("\toutpro.read_float(") + param.name + ");");
+	        FILE_WRITELN(fp, T"int *%s_bak;", param.name.c_str());
+	        FILE_WRITELN(fp, T"outpro.read_array(%s_bak, %s_len);", param.name.c_str(), param.name.c_str());
+	        FILE_WRITELN(fp, T"memcpy(%s, %s_bak, sizeof(int) * %s_len);", 
+                    param.name.c_str(), param.name.c_str(), param.name.c_str());
         }
         else if (param.type == "String"){
-            file_writeln(fp, std::string("\tint ") + param.name + "_len_1;");
-            file_writeln(fp, std::string("\toutpro.read_string(") + param.name +"_len_1, " + param.name + ");");
+	        FILE_WRITELN(fp, T"char *%s_bak;", param.name.c_str());
+            FILE_WRITELN(fp, T"outpro.read_string(%s_len, %s_bak);", param.name.c_str(), param.name.c_str());
+        } else {
+            FILE_WRITELN(fp, T"outpro.read_%s(%s);", param.type.c_str(), param.name.c_str());
         }
     }
-    if(return_type == "int"){
-        file_writeln(fp, std::string("\tint retval;"));
-        file_writeln(fp, std::string("\toutpro.read_int(retval);"));
-        file_writeln(fp, std::string("\treturn retval;"));
+    FILE_WRITELN(fp, "");
+    if(return_type != "void"){
+        FILE_WRITELN(fp, T"%s retval;", return_type.c_str());
+        FILE_WRITELN(fp, T"outpro.read_%s(retval);", return_type.c_str());
+        FILE_WRITELN(fp, T"return retval;");
     }
-    else if(return_type == "double"){
-        file_writeln(fp, std::string("\tdouble retval;"));
-        file_writeln(fp, std::string("\toutpro.read_double(retval);"));
-        file_writeln(fp, std::string("\treturn retval;"));
-    }
-    else if(return_type == "float"){
-        file_writeln(fp, std::string("\tfloat retval;"));
-        file_writeln(fp, std::string("\toutpro.read_float(retval);"));
-        file_writeln(fp, std::string("\treturn retval;"));
-    }
-    file_writeln(fp, "}\n");
+    FILE_WRITELN(fp, "}\n");
 }
 
 static void generate_common_head(const program_t &program,

@@ -4,8 +4,8 @@
 #include "rpc_log.h"
 #include "rpc_net.h"
 #include "rpc_common.h"
-#include "$name$.h"
-#include "$name$_svr.h"
+#include "cs.h"
+#include "cs_svr.h"
 
 static bool running = true;
 static void signal_proc(int signo) {
@@ -71,7 +71,7 @@ int main(int argc, char *argv[]) {
     signal(SIGTERM, signal_proc);
 
     /* initialize server */
-    $name$_svr *svr = new $name$_svr;
+    cs_svr *svr = new cs_svr;
 
     if (0 != svr->run(threads_num)) {
         RPC_WARNING("create threads error");
