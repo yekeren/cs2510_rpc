@@ -1,6 +1,7 @@
 #include "basic_proto.h"
 #include <stdlib.h>
 #include <string.h>
+#include <arpa/inet.h>
 #include "rpc_log.h"
 
 basic_proto::basic_proto() {
@@ -14,23 +15,6 @@ basic_proto::basic_proto(const char* buf, int buf_len){
 }
 
 basic_proto::~basic_proto() {
-}
-
-void basic_proto::add_int(int retval){
-    while (m_encoded_len + sizeof(retval) > m_buf.size()){
-        m_buf.resize(m_buf.size()*2);
-    }
-    *(int*) (m_buf.data() + m_encoded_len) = retval;
-    m_encoded_len += sizeof(int);
-}
-
-int basic_proto::read_int(int &retval){
-    if ((m_encoded_len + sizeof(int)) > m_buf.size()){
-        return -1;
-    }
-    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
-    m_encoded_len += sizeof(int);
-    return 0;
 }
 
 void basic_proto::add_float(float retval){
@@ -66,7 +50,6 @@ int basic_proto::read_double(double &retval){
     return 0;
 }
 
-
 int basic_proto::read_binary(int bin_len, char* &bin){
     if((m_encoded_len + bin_len) > m_buf.size()){
         return -1;
@@ -84,27 +67,57 @@ void basic_proto::add_binary(const char * bin, int bin_len){
     m_encoded_len +=bin_len;
 }
 
+void basic_proto::add_int(int retval){
+    while (m_encoded_len + sizeof(retval) > m_buf.size()){
+        m_buf.resize(m_buf.size()*2);
+    }
+    *(int*) (m_buf.data() + m_encoded_len) = htonl(retval);
+    m_encoded_len += sizeof(int);
+}
+
+int basic_proto::read_int(int &retval){
+    if ((m_encoded_len + sizeof(int)) > m_buf.size()){
+        return -1;
+    }
+    retval = *(int*)((char*)m_buf.data() + m_encoded_len);
+    retval = ntohl(retval);
+    m_encoded_len += sizeof(int);
+    return 0;
+}
+
 void basic_proto::add_array(int *data, int size) {
     add_int(size);
-    add_binary((const char*)data, sizeof(int) * size);
+    //add_binary((const char*)data, sizeof(int) * size);
+    for(int i = 0; i < size; i ++){
+        add_int(data[i]);
+    }
 }
 
 int basic_proto::read_array(int *&data, int &size) {
     if (read_int(size) < 0) {
         return -1;
     }
-    char *ptr = NULL;
-    if (read_binary(size * sizeof(int), ptr) < 0) {
+    if (m_buf.size() < size * sizeof(int) + m_encoded_len) {
         return -1;
     }
-    data = (int*)ptr;
+    int *num = (int*)m_buf.data() + m_encoded_len;
+    for (int i = 0; i < size; ++i, num += sizeof(int)) {
+        *num = ntohl(*num);
+    }
+    data = (int*)m_buf.data() + m_encoded_len;
+    m_encoded_len += sizeof(int) * size;
     return 0;
 }
 
 void basic_proto::add_matrix(int *data, int row, int col) {
     add_int(row);
     add_int(col);
-    add_binary((const char*)data, sizeof(int) * row * col);
+    //add_binary((const char*)data, sizeof(int) * row * col);
+    for(int i = 0;i<row;i++){
+        for(int j=0;j<col;j++){
+            add_int(data[i*col+j]);
+        }
+    }
 }
 
 int basic_proto::read_matrix(int *&data, int &row, int &col) {
@@ -114,12 +127,24 @@ int basic_proto::read_matrix(int *&data, int &row, int &col) {
     if (read_int(col) < 0) {
         return -1;
     }
-    char *ptr = NULL;
-    if (read_binary(sizeof(int) * row * col, ptr) < 0) {
+    if(m_buf.size() < row*col*sizeof(int)+m_encoded_len){
         return -1;
     }
-    data = (int*)ptr;
+    int *num = (int*)m_buf.data() + m_encoded_len;
+    for(int i=0;i<row;i++){
+        for(int j=0;j<col;j++){
+            *num = ntohl(*num);
+            *num += sizeof(int);
+        }
+    }
+    data = (int*) m_buf.data() + m_encoded_len;
+    m_encoded_len += sizeof(int)*row*col;
     return 0;
+    //char *ptr = NULL;
+    //if (read_binary(sizeof(int) * row * col, ptr) < 0) {
+     //   return -1;
+    //}
+    //data = (int*)ptr;
 }
 
 void basic_proto::add_string(int str_len, const char* str){
