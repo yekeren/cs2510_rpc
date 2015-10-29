@@ -1,0 +1,69 @@
+INFO 2015-10-27 20:08:34 src/main_comp_svr.cpp:67 main() register ip=127.0.0.1
+INFO 2015-10-27 20:08:34 src/main_comp_svr.cpp:68 main() register port=8001
+INFO 2015-10-27 20:08:34 src/accept_event.cpp:81 bind() svr binded succ, fd=3, port=8001, backlog=32
+4.0000 / 5.0000 = 0.8000
+original matrix:
+   1   2   3
+   4   5   6
+transpose result:
+   1   4
+   2   5
+   3   6
+original array:
+   2   3   5   7   3   4   5   1   2
+sort result:
+   1   2   2   3   3   4   5   5   7
+4.0000 / 5.0000 = 0.8000
+original matrix:
+   1   2   3
+   4   5   6
+transpose result:
+   1   4
+   2   5
+   3   6
+original array:
+   2   3   5   7   3   4   5   1   2
+sort result:
+   1   2   2   3   3   4   5   5   7
+4.0000 / 5.0000 = 0.8000
+original matrix:
+   1   2   3
+   4   5   6
+transpose result:
+   1   4
+   2   5
+   3   6
+original array:
+   2   3   5   7   3   4   5   1   2
+sort result:
+   1   2   2   3   3   4   5   5   7
+4.0000 / 5.0000 = 0.8000
+original matrix:
+   1   2   3
+   4   5   6
+transpose result:
+   1   4
+   2   5
+   3   6
+original array:
+   2   3   5   7   3   4   5   1   2
+sort result:
+   1   2   2   3   3   4   5   5   7
+4.0000 / 5.0000 = 0.8000
+original matrix:
+   1   2   3
+   4   5   6
+transpose result:
+   1   4
+   2   5
+   3   6
+original array:
+   2   3   5   7   3   4   5   1   2
+sort result:
+   1   2   2   3   3   4   5   5   7
+WARNING 2015-10-27 20:12:08 src/svr_base.cpp:184 run_routine() select() error, errno=4
+WARNING 2015-10-27 20:12:09 src/rpc_net.cpp:144 connect_ex() connect() error, remote not available, fd=26
+WARNING 2015-10-27 20:12:09 src/rpc_http.cpp:132 http_talk() connect_ex() failed, fd=-1, ip=127.0.0.1, port=8000
+WARNING 2015-10-27 20:12:09 src/rpc_common.cpp:103 unregister_information() http_talk() to directory server error
+WARNING 2015-10-27 20:12:09 src/main_comp_svr.cpp:112 main() unregister error
+WARNING 2015-10-27 20:12:09 src/main_comp_svr.cpp:116 main() server exit
