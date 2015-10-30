@@ -100,11 +100,11 @@ int basic_proto::read_array(int *&data, int &size) {
     if (m_buf.size() < size * sizeof(int) + m_encoded_len) {
         return -1;
     }
-    int *num = (int*)m_buf.data() + m_encoded_len;
+    char *num = (char*)(m_buf.data() + m_encoded_len);
     for (int i = 0; i < size; ++i, num += sizeof(int)) {
-        *num = ntohl(*num);
+        *(int*)num = ntohl(*(int*)num);
     }
-    data = (int*)m_buf.data() + m_encoded_len;
+    data = (int*)(m_buf.data() + m_encoded_len);
     m_encoded_len += sizeof(int) * size;
     return 0;
 }
@@ -130,14 +130,14 @@ int basic_proto::read_matrix(int *&data, int &row, int &col) {
     if(m_buf.size() < row*col*sizeof(int)+m_encoded_len){
         return -1;
     }
-    int *num = (int*)m_buf.data() + m_encoded_len;
+    char*num = (char*)(m_buf.data() + m_encoded_len);
     for(int i=0;i<row;i++){
         for(int j=0;j<col;j++){
-            *num = ntohl(*num);
-            *num += sizeof(int);
+            *(int*)num = ntohl(*(int*)num);
+            num += sizeof(int);
         }
     }
-    data = (int*) m_buf.data() + m_encoded_len;
+    data = (int*)(m_buf.data() + m_encoded_len);
     m_encoded_len += sizeof(int)*row*col;
     return 0;
     //char *ptr = NULL;
