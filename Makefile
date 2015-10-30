@@ -1,7 +1,7 @@
 OS=$(shell uname -s)
 INCLUDE='./include'
 
-IDLFILE=conf/idl2.xml
+IDLFILE=conf/idl1.xml
 
 CXX=g++
 CXXFLAGS=-g -I$(INCLUDE)
