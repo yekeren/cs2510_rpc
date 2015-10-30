@@ -1,0 +1,20 @@
+nohup: ignoring input
+INFO 2015-10-29 23:51:00 src/main_ds_svr.cpp:56 main() threads num=4
+INFO 2015-10-29 23:51:00 src/main_ds_svr.cpp:57 main() listen port=8000
+INFO 2015-10-29 23:51:00 src/accept_event.cpp:81 bind() svr binded succ, fd=3, port=8000, backlog=32
+INFO 2015-10-29 23:51:04 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=0
+INFO 2015-10-29 23:51:04 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=0
+INFO 2015-10-29 23:51:04 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=0
+INFO 2015-10-29 23:51:04 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=0
+INFO 2015-10-29 23:51:05 src/ds_svr.cpp:263 do_register() register succ, id=2342134, name=cs, version=1.0.0, ip=136.142.227.18, port=8001
+INFO 2015-10-29 23:51:06 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:06 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:06 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:06 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:07 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:07 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:07 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:07 src/ds_svr.cpp:327 do_get_insts_by_id() get_insts_by_id succ, id=2342134, version=1.0.0, alive_svrs=1
+INFO 2015-10-29 23:51:15 src/ds_svr.cpp:263 do_register() register succ, id=2342134, name=cs, version=1.0.0, ip=136.142.227.18, port=8001
+WARNING 2015-10-29 23:51:17 src/svr_base.cpp:184 run_routine() select() error, errno=4
+WARNING 2015-10-29 23:51:18 src/main_ds_svr.cpp:90 main() server exit

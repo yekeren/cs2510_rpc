@@ -1,0 +1,22 @@
+nohup: ignoring input
+INFO 2015-10-29 23:50:35 src/main_cs_svr.cpp:67 main() register ip=136.142.227.18
+INFO 2015-10-29 23:50:35 src/main_cs_svr.cpp:68 main() register port=8001
+INFO 2015-10-29 23:50:35 src/accept_event.cpp:81 bind() svr binded succ, fd=3, port=8001, backlog=32
+WARNING 2015-10-29 23:50:35 src/rpc_net.cpp:144 connect_ex() connect() error, remote not available, fd=4
+WARNING 2015-10-29 23:50:35 src/rpc_http.cpp:132 http_talk() connect_ex() failed, fd=-1, ip=136.142.227.18, port=8000
+WARNING 2015-10-29 23:50:35 src/rpc_common.cpp:59 register_information() http_talk() to directory server error
+WARNING 2015-10-29 23:50:35 src/main_cs_svr.cpp:88 main() register error
+WARNING 2015-10-29 23:50:45 src/rpc_net.cpp:144 connect_ex() connect() error, remote not available, fd=4
+WARNING 2015-10-29 23:50:45 src/rpc_http.cpp:132 http_talk() connect_ex() failed, fd=-1, ip=136.142.227.18, port=8000
+WARNING 2015-10-29 23:50:45 src/rpc_common.cpp:59 register_information() http_talk() to directory server error
+WARNING 2015-10-29 23:50:45 src/main_cs_svr.cpp:100 main() update register information error
+WARNING 2015-10-29 23:50:55 src/rpc_net.cpp:144 connect_ex() connect() error, remote not available, fd=4
+WARNING 2015-10-29 23:50:55 src/rpc_http.cpp:132 http_talk() connect_ex() failed, fd=-1, ip=136.142.227.18, port=8000
+WARNING 2015-10-29 23:50:55 src/rpc_common.cpp:59 register_information() http_talk() to directory server error
+WARNING 2015-10-29 23:50:55 src/main_cs_svr.cpp:100 main() update register information error
+WARNING 2015-10-29 23:51:19 src/svr_base.cpp:184 run_routine() select() error, errno=4
+WARNING 2015-10-29 23:51:20 src/rpc_net.cpp:144 connect_ex() connect() error, remote not available, fd=6
+WARNING 2015-10-29 23:51:20 src/rpc_http.cpp:132 http_talk() connect_ex() failed, fd=-1, ip=136.142.227.18, port=8000
+WARNING 2015-10-29 23:51:20 src/rpc_common.cpp:103 unregister_information() http_talk() to directory server error
+WARNING 2015-10-29 23:51:20 src/main_cs_svr.cpp:112 main() unregister error
+WARNING 2015-10-29 23:51:20 src/main_cs_svr.cpp:116 main() server exit
