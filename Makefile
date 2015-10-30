@@ -64,6 +64,7 @@ STUB_GENERATOR_OBJS= \
 
 # compiling all
 all: $(COMMON_LIB) $(DIRECTORY_SERVER) $(STUB_GENERATOR) $(CLIENT_STUB) $(SERVER_STUB)
+	cp -rf script output/
 	@echo -e "$(cchighlight)finish compiling$(ccend)"
 
 # compiling common_lib
@@ -77,14 +78,14 @@ $(COMMON_LIB): $(COMMON_LIB_OBJS)
 
 # compiling directory_server
 $(DIRECTORY_SERVER): $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS)
-	mkdir -p output/bin
+	mkdir -p output/directory_server
 	echo $(OS)
 ifeq ($(OS),Linux)
 	$(CXX) $(CXXFLAGS) -lpthread -o $(DIRECTORY_SERVER) -Xlinker "-(" $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS) -Xlinker "-)"
 else
 	$(CXX) $(CXXFLAGS) -lpthread -o $(DIRECTORY_SERVER) -Xlinker $(COMMON_LIB) $(DIRECTORY_SERVER_OBJS)
 endif
-	cp $(DIRECTORY_SERVER) output/bin
+	cp $(DIRECTORY_SERVER) output/directory_server
 	@echo -e "$(cchighlight)successfully compiling $(DIRECTORY_SERVER)$(ccend)"
 
 # compiling stub_generator

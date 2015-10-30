@@ -170,7 +170,7 @@ static void generate_client_content_stub(FILE *fp, std::string proc_name, const 
     FILE_WRITELN(fp, T"svr_inst_t svr_inst;");
     FILE_WRITELN(fp, T"int ret_val = get_and_verify_svr(DS_IP, DS_PORT, RPC_ID, RPC_VERSION, svr_inst);");
     FILE_WRITELN(fp, T"if (ret_val == -1) {");
-	FILE_WRITELN(fp, TT"RPC_INFO(\"server verified, id=%%d, version=%%s, ip=%%s, port=%%u\", ");
+	FILE_WRITELN(fp, TT"RPC_WARNING(\"server verified error, id=%%d, version=%%s, ip=%%s, port=%%u\", ");
     FILE_WRITELN(fp, TTTT"svr_inst.id, svr_inst.version.c_str(), svr_inst.ip.c_str(), svr_inst.port);");
     if (return_type == "void") {
         FILE_WRITELN(fp, TT"return;");
